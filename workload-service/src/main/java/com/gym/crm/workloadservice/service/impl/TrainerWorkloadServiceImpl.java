@@ -28,24 +28,30 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     private final TrainerMapper trainerMapper;
 
     @Override
-    public Trainer addTrainingWorkload(@Valid TrainerWorkloadRequest request) {
-        log.info("Processing workload for trainer: {}, action: {}", request.getTrainerUsername(), request.getActionType());
+    public void processTrainingWorkload(@Valid TrainerWorkloadRequest request) {
+        switch (request.getActionType()) {
+            case ADD -> addWorkload(request);
+            case DELETE -> deleteWorkload(request);
+            default -> throw new ResourceNotFoundException("Unknown action type: " + request.getActionType());
+        }
+    }
 
+    private void addWorkload(TrainerWorkloadRequest request) {
         Trainer trainer = findOrCreateTrainer(request);
         Year year = findOrCreateYear(trainer, request.getTrainingDate().getYear());
         Month month = findOrCreateMonth(year, request.getTrainingDate().getMonthValue());
 
-        processWorkloadAction(month, request);
-
-        return trainerRepository.save(trainer);
+        month.setTotalDurationMinutes(month.getTotalDurationMinutes() + request.getTrainingDuration());
+        trainerRepository.save(trainer);
     }
 
-    @Override
-    public void deleteTrainingWorkload(String username) {
-        trainerRepository.findByUsername(username).ifPresent(trainer -> {
-            trainer.getYears().clear();
-            trainerRepository.save(trainer);
-        });
+    private void deleteWorkload(TrainerWorkloadRequest request) {
+        Trainer trainer = findOrCreateTrainer(request);
+        Year year = findOrCreateYear(trainer, request.getTrainingDate().getYear());
+        Month month = findOrCreateMonth(year, request.getTrainingDate().getMonthValue());
+
+        month.setTotalDurationMinutes(Math.max(0, month.getTotalDurationMinutes() - request.getTrainingDuration()));
+        trainerRepository.save(trainer);
     }
 
     private Trainer findOrCreateTrainer(TrainerWorkloadRequest request) {
@@ -94,16 +100,5 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         year.getMonths().add(newMonth);
 
         return newMonth;
-    }
-
-    private void processWorkloadAction(Month month, TrainerWorkloadRequest request) {
-        int current = month.getTotalDurationMinutes();
-        int change = request.getTrainingDuration();
-
-        switch (request.getActionType()) {
-            case ADD -> month.setTotalDurationMinutes(current + change);
-            case DELETE -> month.setTotalDurationMinutes(Math.max(0, current - change));
-            default -> throw new ResourceNotFoundException("Unknown action type: " + request.getActionType());
-        }
     }
 }
