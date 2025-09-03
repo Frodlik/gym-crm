@@ -38,6 +38,6 @@ public class Month {
     private Integer totalDurationMinutes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "year_id", nullable = false)
+    @JoinColumn(name = "year_id")
     private Year year;
 }

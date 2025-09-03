@@ -1,0 +1,33 @@
+trainers:
+  - id: 1
+    username: "sasuke.uchiha"
+    first_name: "Sasuke"
+    last_name: "Uchiha"
+    is_active: false
+  - id: 2
+    username: "saitama.punch"
+    first_name: "Saitama"
+    last_name: "Punch"
+    is_active: true
+  - id: 3
+    username: "ichigo.kurosaki"
+    first_name: "Ichigo"
+    last_name: "Kurosaki"
+    is_active: true
+
+years:
+  - id: 2
+    year_number: 2023
+    trainer_id: 1
+  - id: 3
+    year_number: 2024
+    trainer_id: 1
+  - id: 4
+    year_number: 2023
+    trainer_id: 2
+  - id: 5
+    year_number: 2024
+    trainer_id: 2
+  - id: 6
+    year_number: 2024
+    trainer_id: 3
