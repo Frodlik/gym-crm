@@ -10,5 +10,10 @@ spring:
     console:
       enabled: true
 
+springdoc:
+  swagger-ui:
+    url: /workload-api.yaml
+    path: /swagger-ui.html
+
 server:
   port: 8085

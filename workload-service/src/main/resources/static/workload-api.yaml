@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Trainer Workload API
+  description: API for managing trainer workloads
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8085/api/v1'
+    description: Local server
+
+paths:
+  /trainers/workload:
+    post:
+      tags:
+        - Trainers Workload
+      summary: Calculate and store the workload for a trainer for a specific year
+      description: This endpoint calculates and stores the workload for a trainer for a specific year based on the provided data
+      operationId: calculateAndStoreWorkload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerWorkloadRequest'
+      responses:
+        '200':
+          description: Trainer workload processed successfully
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+components:
+  schemas:
+    TrainerWorkloadRequest:
+      type: object
+      required:
+        - trainerUsername
+        - trainerFirstName
+        - trainerLastName
+        - trainingDate
+        - trainingDuration
+        - isActive
+        - actionType
+      properties:
+        trainerUsername:
+          type: string
+          description: Unique username of the trainer
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          maxLength: 100
+          example: "billy.herrington"
+        trainerFirstName:
+          type: string
+          description: First name of the trainer
+          maxLength: 50
+          example: "Billy"
+        trainerLastName:
+          type: string
+          description: Last name of the trainer
+          maxLength: 50
+          example: "Herrington"
+        trainingDate:
+          type: string
+          format: date
+          description: date
+          example: "2025-08-31"
+        trainingDuration:
+          type: integer
+          description: Training duration in minutes
+          minimum: 1
+          example: 60
+        isActive:
+          type: boolean
+          description: Indicates if the trainer is active
+          example: true
+        actionType:
+          type: string
+          description: Action to perform on workload
+          enum:
+            - ADD
+            - DELETE
+          example: "ADD"
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          type: integer
+          description: Unique identifier for the error type
+          example: 2760
+        errorMessage:
+          type: string
+          description: Human-readable description of the error
+          example: "An error occurred while processing the request: error message"
