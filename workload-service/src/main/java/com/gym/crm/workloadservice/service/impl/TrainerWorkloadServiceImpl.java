@@ -101,6 +101,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         if (year.getMonths() == null) {
             year.setMonths(new ArrayList<>());
         }
+
         return year.getMonths().stream()
                 .filter(m -> m.getMonthNumber() == monthNumber)
                 .findFirst()
