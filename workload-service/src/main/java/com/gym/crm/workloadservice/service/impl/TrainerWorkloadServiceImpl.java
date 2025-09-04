@@ -1,6 +1,7 @@
 package com.gym.crm.workloadservice.service.impl;
 
 import com.gym.crm.openapi.model.TrainerWorkloadRequest;
+import com.gym.crm.openapi.model.TrainerWorkloadResponse;
 import com.gym.crm.workloadservice.exception.ResourceNotFoundException;
 import com.gym.crm.workloadservice.mapper.TrainerMapper;
 import com.gym.crm.workloadservice.model.Month;
@@ -36,6 +37,14 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         }
     }
 
+    @Override
+    public TrainerWorkloadResponse getTrainerWorkload(String username) {
+        return trainerMapper.toTrainerWorkloadResponse(
+                trainerRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("Trainer not found with username: " + username))
+        );
+    }
+
     private void addWorkload(TrainerWorkloadRequest request) {
         Trainer trainer = findOrCreateTrainer(request);
         Year year = findOrCreateYear(trainer, request.getTrainingDate().getYear());
@@ -60,6 +69,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         if (optional.isPresent()) {
             Trainer trainer = optional.get();
             trainerMapper.updateTrainerFromRequest(request, trainer);
+
             return trainer;
         }
 
@@ -67,6 +77,9 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     }
 
     private Year findOrCreateYear(Trainer trainer, int yearNumber) {
+        if (trainer.getYears() == null) {
+            trainer.setYears(new ArrayList<>());
+        }
         return trainer.getYears().stream()
                 .filter(y -> y.getYearNumber() == yearNumber)
                 .findFirst()
@@ -85,6 +98,9 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     }
 
     private Month findOrCreateMonth(Year year, int monthNumber) {
+        if (year.getMonths() == null) {
+            year.setMonths(new ArrayList<>());
+        }
         return year.getMonths().stream()
                 .filter(m -> m.getMonthNumber() == monthNumber)
                 .findFirst()
