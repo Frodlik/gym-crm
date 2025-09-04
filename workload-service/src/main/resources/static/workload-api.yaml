@@ -157,7 +157,6 @@ components:
           description: List of years with workload details
           items:
             $ref: '#/components/schemas/YearlyWorkload'
-
     YearlyWorkload:
       type: object
       required:
