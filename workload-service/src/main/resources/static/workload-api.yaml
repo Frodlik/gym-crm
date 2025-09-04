@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  title: Trainer Workload API
+  description: API for managing trainer workloads
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8085/api/v1'
+    description: Local server
+
+paths:
+  /trainers/workload:
+    post:
+      tags:
+        - Trainers Workload
+      summary: Calculate and store the workload for a trainer for a specific year
+      description: This endpoint calculates and stores the workload for a trainer for a specific year based on the provided data
+      operationId: calculateAndStoreWorkload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerWorkloadRequest'
+      responses:
+        '200':
+          description: Trainer workload processed successfully
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+  /trainers/workload/{trainerUsername}:
+    get:
+      tags:
+        - Trainers Workload
+      summary: Retrieve the workload details for a specific trainer
+      description: This endpoint retrieves the workload details for a specific trainer based on their username
+      operationId: getTrainerWorkload
+      parameters:
+        - name: trainerUsername
+          in: path
+          required: true
+          description: Unique username of the trainer
+          schema:
+            type: string
+            pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+            maxLength: 100
+            example: "billy.herrington"
+      responses:
+        '200':
+          description: Trainer workload retrieved successfully
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+components:
+  schemas:
+    TrainerWorkloadRequest:
+      type: object
+      required:
+        - trainerUsername
+        - trainerFirstName
+        - trainerLastName
+        - trainingDate
+        - trainingDuration
+        - isActive
+        - actionType
+      properties:
+        trainerUsername:
+          type: string
+          description: Unique username of the trainer
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          maxLength: 100
+          example: "billy.herrington"
+        trainerFirstName:
+          type: string
+          description: First name of the trainer
+          maxLength: 50
+          example: "Billy"
+        trainerLastName:
+          type: string
+          description: Last name of the trainer
+          maxLength: 50
+          example: "Herrington"
+        trainingDate:
+          type: string
+          format: date
+          description: date
+          example: "2025-08-31"
+        trainingDuration:
+          type: integer
+          description: Training duration in minutes
+          minimum: 1
+          example: 60
+        isActive:
+          type: boolean
+          description: Indicates if the trainer is active
+          example: true
+        actionType:
+          type: string
+          description: Action to perform on workload
+          enum:
+            - ADD
+            - DELETE
+          example: "ADD"
+    TrainerWorkloadResponse:
+      type: object
+      required:
+        - username
+        - firstName
+        - lastName
+        - isActive
+        - years
+      properties:
+        username:
+          type: string
+          description: Unique username of the trainer
+          pattern: '^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$'
+          maxLength: 100
+          example: "billy.herrington"
+        firstName:
+          type: string
+          description: First name of the trainer
+          maxLength: 50
+          example: "Billy"
+        lastName:
+          type: string
+          description: Last name of the trainer
+          maxLength: 50
+          example: "Herrington"
+        isActive:
+          type: boolean
+          description: Indicates if the trainer is active
+          example: true
+        years:
+          type: array
+          description: List of years with workload details
+          items:
+            $ref: '#/components/schemas/YearlyWorkload'
+    YearlyWorkload:
+      type: object
+      required:
+        - year
+        - months
+      properties:
+        year:
+          type: integer
+          description: Year number
+          example: 2025
+        months:
+          type: array
+          description: List of months with summary duration
+          items:
+            $ref: '#/components/schemas/MonthlyWorkload'
+    MonthlyWorkload:
+      type: object
+      required:
+        - month
+        - trainingSummaryDuration
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Month number
+          example: 8
+        trainingSummaryDuration:
+          type: integer
+          minimum: 0
+          description: Total duration of trainings in minutes
+          example: 180
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          type: integer
+          description: Unique identifier for the error type
+          example: 2760
+        errorMessage:
+          type: string
+          description: Human-readable description of the error
+          example: "An error occurred while processing the request: error message"
