@@ -1,0 +1,99 @@
+spring:
+  application:
+    name: gym-crm
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/gym_crm
+    username: gcauser
+    password: gcauser
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    drop-first: true
+    contexts: dev,default
+    default-schema: gym_crm
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    date-format: yyyy-MM-dd
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    defaults:
+      enabled: true
+
+gca:
+  cors:
+    allowed-origins: "*"
+  metrics:
+    disk-space-threshold-bytes: 104857600
+
+jwt:
+  secret: ${JWT_KEY}
+  expiration: 900
+  cookie:
+    name: access-token
+    secure: false
+    http-only: true
+  refresh:
+    expiration: 604800
+    cookie:
+      name: refresh-token
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: false
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5
