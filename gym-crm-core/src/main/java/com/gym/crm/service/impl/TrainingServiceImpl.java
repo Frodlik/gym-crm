@@ -3,6 +3,7 @@ package com.gym.crm.service.impl;
 import com.gym.crm.actuator.prometheus.TrainingMetrics;
 import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainer.TrainerSearchFilter;
+import com.gym.crm.dto.trainer.TrainerWorkloadRequest;
 import com.gym.crm.dto.training.TrainingCreateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
@@ -17,6 +18,7 @@ import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.repository.specification.TrainingSpecifications;
 import com.gym.crm.service.TrainingService;
+import com.gym.crm.service.WorkloadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -39,6 +41,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
+    private final WorkloadService workloadService;
     private final TrainingMapper trainingMapper;
     private final TrainingMetrics trainingMetrics;
 
@@ -66,6 +69,8 @@ public class TrainingServiceImpl implements TrainingService {
         trainingRepository.save(training);
         trainingMetrics.recordTrainingCreated();
         logger.info("Training created successfully");
+
+        workloadService.processTrainerWorkload(buildWorkloadRequest(training));
     }
 
     @Override
@@ -123,5 +128,17 @@ public class TrainingServiceImpl implements TrainingService {
         logger.info("Retrieving all training types");
 
         return trainingTypeRepository.findAll();
+    }
+
+    private TrainerWorkloadRequest buildWorkloadRequest(Training training) {
+        return TrainerWorkloadRequest.builder()
+                .trainerUsername(training.getTrainer().getUser().getUsername())
+                .trainerFirstName(training.getTrainer().getUser().getFirstName())
+                .trainerLastName(training.getTrainer().getUser().getLastName())
+                .trainingDate(training.getTrainingDate())
+                .trainingDuration(training.getTrainingDuration())
+                .isActive(training.getTrainer().getUser().getIsActive())
+                .actionType(TrainerWorkloadRequest.ActionType.ADD)
+                .build();
     }
 }
