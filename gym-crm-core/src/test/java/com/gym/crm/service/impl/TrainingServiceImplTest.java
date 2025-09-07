@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.actuator.prometheus.TrainingMetrics;
+import com.gym.crm.dto.trainer.TrainerWorkloadRequest;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
@@ -17,6 +18,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
+import com.gym.crm.service.WorkloadService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +70,8 @@ class TrainingServiceImplTest {
     private TrainingMapper trainingMapper;
     @Mock
     private TrainingMetrics trainingMetrics;
+    @Mock
+    private WorkloadService workloadService;
     @InjectMocks
     private TrainingServiceImpl service;
 
@@ -142,6 +146,44 @@ class TrainingServiceImplTest {
         verify(trainingTypeRepository).findByTrainingTypeName(request.getTrainingName());
         verifyNoMoreInteractions(trainingMapper, trainingRepository);
         verify(trainingMetrics, never()).recordTrainingCreated();
+    }
+
+    @Test
+    void create_ShouldCallWorkloadService_WithCorrectRequest() {
+        TrainingCreateRequestDto createRequest = GymTestObjects.buildTrainingCreateRequest();
+        Trainee trainee = buildTrainee();
+        Trainer trainer = buildTrainer();
+        TrainingType trainingType = buildFitnessTrainingType();
+        Training training = buildTraining();
+
+        ArgumentCaptor<TrainerWorkloadRequest> workloadCaptor = ArgumentCaptor.forClass(TrainerWorkloadRequest.class);
+
+        when(traineeRepository.findTraineeByUser_Username(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findTrainerByUser_Username(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(trainingTypeRepository.findByTrainingTypeName(createRequest.getTrainingName())).thenReturn(Optional.of(trainingType));
+        when(trainingMapper.toEntity(createRequest)).thenReturn(training);
+
+        service.create(createRequest);
+
+        verify(workloadService).processTrainerWorkload(workloadCaptor.capture());
+        TrainerWorkloadRequest capturedRequest = workloadCaptor.getValue();
+        assertEquals(TRAINER_USERNAME, capturedRequest.getTrainerUsername());
+        assertEquals(TRAINER_FIRST_NAME, capturedRequest.getTrainerFirstName());
+        assertEquals(TRAINER_LAST_NAME, capturedRequest.getTrainerLastName());
+        assertEquals(TRAINING_DATE, capturedRequest.getTrainingDate());
+        assertEquals(TRAINING_DURATION, capturedRequest.getTrainingDuration());
+        assertEquals(true, capturedRequest.getIsActive());
+        assertEquals(TrainerWorkloadRequest.ActionType.ADD, capturedRequest.getActionType());
+    }
+
+    @Test
+    void create_ShouldNotCallWorkloadService_WhenTraineeNotFound() {
+        TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
+
+        when(traineeRepository.findTraineeByUser_Username(request.getTraineeUsername())).thenReturn(Optional.empty());
+
+        assertThrows(CoreServiceException.class, () -> service.create(request));
+        verify(workloadService, never()).processTrainerWorkload(any());
     }
 
     @Test
