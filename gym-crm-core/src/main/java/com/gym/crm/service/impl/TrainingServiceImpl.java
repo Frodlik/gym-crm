@@ -18,7 +18,7 @@ import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.repository.specification.TrainingSpecifications;
 import com.gym.crm.service.TrainingService;
-import com.gym.crm.service.WorkloadService;
+import com.gym.crm.service.integration.service.WorkloadServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
-    private final WorkloadService workloadService;
+    private final WorkloadServiceImpl workloadService;
     private final TrainingMapper trainingMapper;
     private final TrainingMetrics trainingMetrics;
 

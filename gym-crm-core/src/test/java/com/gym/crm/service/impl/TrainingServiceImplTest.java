@@ -18,7 +18,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import com.gym.crm.service.WorkloadService;
+import com.gym.crm.service.integration.service.WorkloadServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -71,7 +71,7 @@ class TrainingServiceImplTest {
     @Mock
     private TrainingMetrics trainingMetrics;
     @Mock
-    private WorkloadService workloadService;
+    private WorkloadServiceImpl workloadService;
     @InjectMocks
     private TrainingServiceImpl service;
 

@@ -1,4 +1,4 @@
-package com.gym.crm.client;
+package com.gym.crm.service.integration.client;
 
 import com.gym.crm.dto.trainer.TrainerWorkloadRequest;
 import org.springframework.cloud.openfeign.FeignClient;
