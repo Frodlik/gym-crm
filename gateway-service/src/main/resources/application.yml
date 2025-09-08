@@ -6,14 +6,24 @@ spring:
       server:
         webflux:
           routes:
-            - id: workload-service
-              uri: lb://WORKLOAD-SERVICE
-              predicates:
-                - Path=/api/v1/trainers/**
-            - id: gym-crm
-              uri: lb://GYM-CRM
-              predicates:
-                - Path=/api/**
+          - id: workload-service
+            uri: lb://WORKLOAD-SERVICE
+            predicates:
+              - Path=/api/v1/trainers/**
+            filters:
+              - name: CircuitBreaker
+                args:
+                  name: workload-cb
+                  fallbackUri: forward:/fallback/workload
+          - id: gym-crm
+            uri: lb://GYM-CRM
+            predicates:
+              - Path=/api/**
+            filters:
+              - name: CircuitBreaker
+                args:
+                  name: gym-crm-cb
+                  fallbackUri: forward:/fallback/gym-crm
           discovery:
             locator:
               enabled: true
@@ -21,6 +31,20 @@ spring:
 
 server:
   port: 8080
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      workload-cb:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+      gym-crm-cb:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
 
 eureka:
   client:
