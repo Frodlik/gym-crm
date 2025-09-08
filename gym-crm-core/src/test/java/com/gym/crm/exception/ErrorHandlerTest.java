@@ -16,6 +16,7 @@ import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
 import static com.gym.crm.exception.ApiError.INVALID_REQUEST_ERROR;
 import static com.gym.crm.exception.ApiError.NOT_FOUND_ERROR;
 import static com.gym.crm.exception.ApiError.SERVER_ERROR;
+import static com.gym.crm.exception.ApiError.SERVICE_UNAVAILABLE;
 import static com.gym.crm.exception.ApiError.TOO_MANY_REQUESTS_ERROR;
 import static com.gym.crm.exception.ApiError.VALIDATION_ERROR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +34,19 @@ class ErrorHandlerTest {
     @BeforeEach
     void setUp() {
         errorHandler = new ErrorHandler();
+    }
+
+    @Test
+    void handleServiceUnavailableException_shouldReturnServiceUnavailableError() {
+        ServiceUnavailableException ex = new ServiceUnavailableException("Workload service down");
+
+        ResponseEntity<ErrorResponse> actual = errorHandler.handleServiceUnavailableException(ex);
+
+        assertNotNull(actual.getBody());
+        assertEquals(SERVICE_UNAVAILABLE.getHttpStatus(), actual.getStatusCode());
+        assertEquals(SERVICE_UNAVAILABLE.getCode(), actual.getBody().getErrorCode());
+        assertTrue(actual.getBody().getErrorMessage().contains(SERVICE_UNAVAILABLE.getMessage()));
+        assertTrue(actual.getBody().getErrorMessage().contains("Workload service down"));
     }
 
     @ParameterizedTest

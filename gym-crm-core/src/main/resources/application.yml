@@ -86,6 +86,16 @@ jwt:
     cookie:
       name: refresh-token
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      workloadService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
 server:
   servlet:
     session:
