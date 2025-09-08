@@ -10,6 +10,10 @@ spring:
               uri: lb://WORKLOAD-SERVICE
               predicates:
                 - Path=/api/v1/trainers/**
+            - id: gym-crm
+              uri: lb://GYM-CRM
+              predicates:
+                - Path=/api/**
           discovery:
             locator:
               enabled: true
