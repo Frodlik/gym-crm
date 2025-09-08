@@ -34,6 +34,13 @@ public class ErrorHandler {
             "Username and password are required"
     );
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailableException(ServiceUnavailableException ex) {
+        logger.error("WorkloadServiceUnavailableException: {}", ex.getMessage(), ex);
+
+        return buildErrorResponse(ApiError.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     @ExceptionHandler(CoreServiceException.class)
     public ResponseEntity<ErrorResponse> handleCoreServiceException(CoreServiceException ex) {
         logger.error("ServiceException: {}", ex.getMessage(), ex);
