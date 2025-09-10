@@ -10,6 +10,9 @@ spring:
     console:
       enabled: true
 
+jwt:
+  secret: ${JWT_KEY}
+
 springdoc:
   swagger-ui:
     url: /workload-api.yaml
