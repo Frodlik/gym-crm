@@ -5,11 +5,13 @@ import com.gym.crm.openapi.model.MonthlyWorkload;
 import com.gym.crm.openapi.model.TrainerWorkloadRequest;
 import com.gym.crm.openapi.model.TrainerWorkloadResponse;
 import com.gym.crm.openapi.model.YearlyWorkload;
+import com.gym.crm.workloadservice.config.TestSecurityConfig;
 import com.gym.crm.workloadservice.service.TrainerWorkloadService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = WorkloadController.class)
+@Import(TestSecurityConfig.class)
 class WorkloadControllerTest {
     @Autowired
     private MockMvc mockMvc;

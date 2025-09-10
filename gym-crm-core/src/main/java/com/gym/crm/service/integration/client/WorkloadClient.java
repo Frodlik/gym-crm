@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "workload-service")
+@FeignClient(name = "workload-service", configuration = FeignConfig.class)
 public interface WorkloadClient {
 
     @PostMapping("/api/v1/trainers/workload")

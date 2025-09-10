@@ -9,6 +9,7 @@ import com.gym.crm.workloadservice.repository.TrainerRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -18,6 +19,9 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @SpringBootTest
 @Transactional
+@TestPropertySource(properties = {
+        "jwt.secret=test-secret-key-for-testing-purposes-that-is-long-enough"
+})
 class TrainerWorkloadServiceImplTest {
     @Autowired
     private TrainerWorkloadServiceImpl service;
