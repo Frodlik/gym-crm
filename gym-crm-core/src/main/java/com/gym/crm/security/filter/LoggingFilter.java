@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -17,12 +18,15 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 @WebFilter(urlPatterns = "/api/*", filterName = "LoggingFilter")
 public class LoggingFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(LoggingFilter.class);
 
+    private static final String TX_ID_KEY = "transactionId";
+    private static final String TX_ID_HEADER = "X-Transaction-Id";
     private static final String PASSWORD_REPLACEMENT = "$1****$3";
     private static final int MAX_PAYLOAD_LENGTH = 1000;
     private static final Set<String> SENSITIVE_ENDPOINTS = Set.of(
@@ -35,14 +39,23 @@ public class LoggingFilter implements Filter {
         ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper((HttpServletRequest) request);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper((HttpServletResponse) response);
 
+        String txId = requestWrapper.getHeader(TX_ID_HEADER);
+        if (txId == null || txId.isBlank()) {
+            txId = UUID.randomUUID().toString();
+        }
+        MDC.put(TX_ID_KEY, txId);
+
         long startTime = System.currentTimeMillis();
 
-        logRequestMeta(requestWrapper);
-        chain.doFilter(requestWrapper, responseWrapper);
-        logRequestBody(requestWrapper);
-        logResponse(requestWrapper, responseWrapper, startTime);
-
-        responseWrapper.copyBodyToResponse();
+        try {
+            logRequestMeta(requestWrapper);
+            chain.doFilter(requestWrapper, responseWrapper);
+            logRequestBody(requestWrapper);
+            logResponse(requestWrapper, responseWrapper, startTime);
+        } finally {
+            responseWrapper.copyBodyToResponse();
+            MDC.clear();
+        }
     }
 
     private void logRequestMeta(ContentCachingRequestWrapper request) {

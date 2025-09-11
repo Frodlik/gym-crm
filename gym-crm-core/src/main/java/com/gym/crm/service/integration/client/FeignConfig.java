@@ -5,6 +5,7 @@ import feign.RequestInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
@@ -21,11 +22,20 @@ public class FeignConfig {
     private final TokenExtractor tokenExtractor;
 
     @Bean
-    public RequestInterceptor authRequestInterceptor() {
-        return requestTemplate -> extractToken().ifPresentOrElse(
-                token -> requestTemplate.header("Authorization", "Bearer " + token),
-                () -> log.warn("No JWT token found for Feign request")
-        );
+    public RequestInterceptor authAndTxIdInterceptor() {
+        return requestTemplate -> {
+            extractToken().ifPresentOrElse(
+                    token -> requestTemplate.header("Authorization", "Bearer " + token),
+                    () -> log.warn("No JWT token found for Feign request")
+            );
+
+            String txId = MDC.get("transactionId");
+            if (txId != null) {
+                requestTemplate.header("X-Transaction-Id", txId);
+            } else {
+                log.warn("No txId found in MDC for Feign request");
+            }
+        };
     }
 
     private Optional<String> extractToken() {
