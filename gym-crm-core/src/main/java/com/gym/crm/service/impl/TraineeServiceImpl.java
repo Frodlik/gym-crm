@@ -10,13 +10,16 @@ import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 import com.gym.crm.exception.CoreServiceException;
+import com.gym.crm.exception.ServiceUnavailableException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
+import com.gym.crm.model.Training;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.TraineeService;
+import com.gym.crm.service.integration.service.WorkloadServiceImpl;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +48,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final TraineeMapper traineeMapper;
     private final UserProfileMetrics userProfileMetrics;
+    private final WorkloadServiceImpl workloadService;
 
     @Override
     @Transactional
@@ -146,10 +150,28 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public void deleteByUsername(String username) {
-        traineeRepository.findTraineeByUser_Username(username)
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
+        Set<Training> trainings = trainee.getTrainings();
+        if (trainings != null && !trainings.isEmpty()) {
+            trainings.forEach(training -> {
+                if (training.getTrainer() != null) {
+                    training.getTrainer().getUser().getUsername();
+                }
+            });
+
+            logger.info("Deleting {} trainings for trainee {}", trainings.size(), username);
+
+            try {
+                workloadService.deleteTraineeWorkloads(trainings);
+            } catch (ServiceUnavailableException e) {
+                throw new CoreServiceException("Cannot delete trainee at this time. Workload service is unavailable.", e);
+            }
+        }
+
         traineeRepository.deleteByUser_Username(username);
+        logger.info("Successfully deleted trainee with username: {}", username);
     }
 
     @Override
