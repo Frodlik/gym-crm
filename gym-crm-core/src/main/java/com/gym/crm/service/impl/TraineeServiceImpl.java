@@ -31,6 +31,7 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -153,22 +154,12 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
-        Set<Training> trainings = trainee.getTrainings();
-        if (trainings != null && !trainings.isEmpty()) {
-            trainings.forEach(training -> {
-                if (training.getTrainer() != null) {
-                    training.getTrainer().getUser().getUsername();
-                }
-            });
-
-            logger.info("Deleting {} trainings for trainee {}", trainings.size(), username);
-
-            try {
-                workloadService.deleteTraineeWorkloads(trainings);
-            } catch (ServiceUnavailableException e) {
-                throw new CoreServiceException("Cannot delete trainee at this time. Workload service is unavailable.", e);
-            }
-        }
+        Optional.ofNullable(trainee.getTrainings())
+                .filter(trainings -> !trainings.isEmpty())
+                .ifPresent(trainings -> {
+                    logger.info("Deleting {} trainings for trainee {}", trainings.size(), username);
+                    processTrainingDeletions(trainings);
+                });
 
         traineeRepository.deleteByUser_Username(username);
         logger.info("Successfully deleted trainee with username: {}", username);
@@ -233,5 +224,21 @@ public class TraineeServiceImpl implements TraineeService {
         }
 
         return new HashSet<>(foundTrainers);
+    }
+
+    private void processTrainingDeletions(Set<Training> trainings) {
+        trainings.stream()
+                .filter(Objects::nonNull)
+                .filter(training -> training.getTrainer() != null)
+                .forEach(this::deleteWorkloadWithHandling);
+    }
+
+    private void deleteWorkloadWithHandling(Training training) {
+        try {
+            workloadService.deleteTraineeWorkloads(Set.of(training));
+            logger.debug("Deleted workload for training {} (trainer: {})", training.getId(), training.getTrainer().getUser().getUsername());
+        } catch (ServiceUnavailableException e) {
+            throw new CoreServiceException("Cannot delete trainee at this time. Workload service is unavailable.", e);
+        }
     }
 }

@@ -32,26 +32,24 @@ public class WorkloadServiceImpl {
 
         log.info("Processing deletion of {} trainings from workload service", trainings.size());
 
-        trainings.forEach(training -> {
-            try {
-                TrainerWorkloadRequest request = buildWorkloadRequest(training);
-
-                processTrainerWorkload(request);
-
-                log.debug("Successfully deleted training {} from workload for trainer {}",
-                        training.getId(), training.getTrainer().getUser().getUsername());
-
-            } catch (ServiceUnavailableException e) {
-                log.error("Workload service unavailable while deleting training {}: {}", training.getId(), e.getMessage());
-                throw e;
-            } catch (Exception e) {
-                log.error("Failed to delete training {} from workload service: {}", training.getId(), e.getMessage(), e);
-            }
-        });
+        trainings.forEach(this::deleteTrainingFromWorkload);
     }
 
     public void fallbackProcessTrainerWorkload(TrainerWorkloadRequest request, Throwable ex) {
         throw new ServiceUnavailableException("Workload service is currently unavailable. Please try again later.", ex);
+    }
+
+    private void deleteTrainingFromWorkload(Training training) {
+        try {
+            TrainerWorkloadRequest request = buildWorkloadRequest(training);
+            processTrainerWorkload(request);
+
+            log.debug("Successfully deleted training {} from workload for trainer {}",
+                    training.getId(), training.getTrainer().getUser().getUsername());
+        } catch (ServiceUnavailableException e) {
+            log.error("Workload service unavailable while deleting training {}: {}", training.getId(), e.getMessage());
+            throw e;
+        }
     }
 
     private TrainerWorkloadRequest buildWorkloadRequest(Training training) {

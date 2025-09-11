@@ -534,11 +534,24 @@ class TraineeServiceImplTest {
     }
 
     private Training buildTraining(LocalDate date) {
+        User trainerUser = User.builder()
+                .username("trainer.test")
+                .firstName("Test")
+                .lastName("Trainer")
+                .isActive(true)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(20L)
+                .user(trainerUser)
+                .build();
+
         return Training.builder()
                 .id(100L)
                 .trainingName("Test Workout")
                 .trainingDate(date)
                 .trainingDuration(45)
+                .trainer(trainer)
                 .build();
     }
 }
