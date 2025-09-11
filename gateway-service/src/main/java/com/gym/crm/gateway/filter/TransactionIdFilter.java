@@ -18,8 +18,8 @@ public class TransactionIdFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-
         String txId = request.getHeaders().getFirst(TX_ID_HEADER);
+
         if (txId == null || txId.isBlank()) {
             txId = UUID.randomUUID().toString();
         }
@@ -27,7 +27,6 @@ public class TransactionIdFilter implements GlobalFilter, Ordered {
         ServerHttpRequest mutatedRequest = request.mutate()
                 .header(TX_ID_HEADER, txId)
                 .build();
-
         MDC.put("transactionId", txId);
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build())

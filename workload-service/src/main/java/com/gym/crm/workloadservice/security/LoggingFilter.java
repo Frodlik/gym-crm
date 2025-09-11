@@ -70,7 +70,7 @@ public class LoggingFilter implements Filter {
     }
 
     private String truncate(String content) {
-        return (content.length() > MAX_PAYLOAD_LENGTH)
+        return content.length() > MAX_PAYLOAD_LENGTH
                 ? content.substring(0, MAX_PAYLOAD_LENGTH) + "... [TRUNCATED]"
                 : content;
     }

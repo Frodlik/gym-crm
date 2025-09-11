@@ -13,9 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 class TransactionIdFilterTest {
-
     private final TransactionIdFilter filter = new TransactionIdFilter();
 
     @Test
