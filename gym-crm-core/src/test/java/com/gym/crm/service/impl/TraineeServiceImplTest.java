@@ -8,29 +8,41 @@ import com.gym.crm.dto.trainee.TraineeGetResponseDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 import com.gym.crm.exception.CoreServiceException;
+import com.gym.crm.exception.ServiceUnavailableException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
+import com.gym.crm.model.Training;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.service.integration.service.WorkloadServiceImpl;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,6 +71,8 @@ class TraineeServiceImplTest {
     private TraineeMapper traineeMapper;
     @Mock
     private UserProfileMetrics userProfileMetrics;
+    @Mock
+    private WorkloadServiceImpl workloadService;
     @InjectMocks
     private TraineeServiceImpl service;
 
@@ -253,6 +267,60 @@ class TraineeServiceImplTest {
     }
 
     @Test
+    void deleteByUsername_ShouldDeleteTrainingsFromWorkloadService() {
+        Trainee traineeWithTrainings = buildTraineeWithTrainings();
+
+        when(traineeRepository.findTraineeByUser_Username(USERNAME))
+                .thenReturn(Optional.of(traineeWithTrainings));
+
+        service.deleteByUsername(USERNAME);
+
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
+        verify(traineeRepository).deleteByUser_Username(USERNAME);
+        InOrder inOrder = inOrder(workloadService, traineeRepository);
+        inOrder.verify(traineeRepository).deleteByUser_Username(USERNAME);
+    }
+
+    @Test
+    void deleteByUsername_WhenWorkloadServiceUnavailable_ShouldThrowException() {
+        Training training = buildTraining(LocalDate.now());
+        Set<Training> trainings = Set.of(training);
+        Trainee traineeWithTrainings = trainee.toBuilder()
+                .trainings(trainings)
+                .build();
+
+        when(traineeRepository.findTraineeByUser_Username(USERNAME))
+                .thenReturn(Optional.of(traineeWithTrainings));
+        doThrow(new ServiceUnavailableException("Workload service is down"))
+                .when(workloadService).deleteTraineeWorkloads(trainings);
+
+        CoreServiceException actual = assertThrows(CoreServiceException.class,
+                () -> service.deleteByUsername(USERNAME));
+
+        assertEquals("Cannot delete trainee at this time. Workload service is unavailable.", actual.getMessage());
+        assertInstanceOf(ServiceUnavailableException.class, actual.getCause());
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
+        verify(workloadService).deleteTraineeWorkloads(trainings);
+        verify(traineeRepository, never()).deleteByUser_Username(anyString());
+    }
+
+    @Test
+    void deleteByUsername_WithNoTrainings_ShouldNotCallWorkloadService() {
+        Trainee traineeWithoutTrainings = trainee.toBuilder()
+                .trainings(new HashSet<>())
+                .build();
+
+        when(traineeRepository.findTraineeByUser_Username(USERNAME))
+                .thenReturn(Optional.of(traineeWithoutTrainings));
+
+        service.deleteByUsername(USERNAME);
+
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
+        verify(workloadService, never()).deleteTraineeWorkloads(any());
+        verify(traineeRepository).deleteByUser_Username(USERNAME);
+    }
+
+    @Test
     void toggleTraineeActivation_ShouldSetActivationToTrue() {
         Trainee inactiveTrainee = buildInactiveTrainee();
 
@@ -426,6 +494,64 @@ class TraineeServiceImplTest {
 
         return Trainee.builder()
                 .user(user)
+                .build();
+    }
+
+    private Trainee buildTraineeWithTrainings() {
+        User trainerUser = User.builder()
+                .username("trainer.john")
+                .firstName("John")
+                .lastName("Trainer")
+                .isActive(true)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(10L)
+                .user(trainerUser)
+                .build();
+
+        Training training1 = Training.builder()
+                .id(100L)
+                .trainingName("Morning Workout")
+                .trainingDate(LocalDate.of(2024, 1, 15))
+                .trainingDuration(60)
+                .trainer(trainer)
+                .build();
+
+        Training training2 = Training.builder()
+                .id(101L)
+                .trainingName("Evening Workout")
+                .trainingDate(LocalDate.of(2024, 1, 16))
+                .trainingDuration(90)
+                .trainer(trainer)
+                .build();
+
+        Set<Training> trainings = new HashSet<>(Arrays.asList(training1, training2));
+
+        return trainee.toBuilder()
+                .trainings(trainings)
+                .build();
+    }
+
+    private Training buildTraining(LocalDate date) {
+        User trainerUser = User.builder()
+                .username("trainer.test")
+                .firstName("Test")
+                .lastName("Trainer")
+                .isActive(true)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(20L)
+                .user(trainerUser)
+                .build();
+
+        return Training.builder()
+                .id(100L)
+                .trainingName("Test Workout")
+                .trainingDate(date)
+                .trainingDuration(45)
+                .trainer(trainer)
                 .build();
     }
 }
