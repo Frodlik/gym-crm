@@ -28,6 +28,9 @@ spring:
             locator:
               enabled: true
               lower-case-service-id: true
+          httpclient:
+            response-timeout: 5s
+            connect-timeout: 3000
 
 server:
   port: 8080
@@ -45,6 +48,11 @@ resilience4j:
         wait-duration-in-open-state: 30s
         sliding-window-size: 10
         minimum-number-of-calls: 5
+
+jwt:
+  secret: ${JWT_KEY}
+  cookie:
+    name: access-token
 
 eureka:
   client:

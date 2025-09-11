@@ -44,7 +44,7 @@ class TransactionIdFilterTest {
         final String[] txIdFromFilter = new String[1];
 
         Mono<Void> actual = filter.filter(exchange, ex -> {
-            txIdFromFilter[0] = exchange.getRequest().getHeaders().getFirst("X-Transaction-Id");
+            txIdFromFilter[0] = ex.getRequest().getHeaders().getFirst("X-Transaction-Id");
             assertThat(txIdFromFilter[0]).isNotBlank();
             return Mono.empty();
         });
