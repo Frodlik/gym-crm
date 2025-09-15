@@ -47,7 +47,8 @@ spring:
     user: gca
     password: gca
     pool:
-      enabled: false
+      enabled: true
+      max-connections: 10
 
 springdoc:
   api-docs:
@@ -118,6 +119,8 @@ security:
 
 jms:
   request-timeout-ms: 5000
+  queues:
+    trainer-workload: trainer.workload.queue
 
 eureka:
   client:
