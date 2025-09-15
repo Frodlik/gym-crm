@@ -9,7 +9,7 @@ spring:
           - id: workload-service
             uri: lb://WORKLOAD-SERVICE
             predicates:
-              - Path=/api/v1/trainers/**
+              - Path=/api/v1/trainers/workload/**
             filters:
               - name: CircuitBreaker
                 args:
