@@ -9,6 +9,13 @@ spring:
   h2:
     console:
       enabled: true
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: gca
+    password: gca
+    pool:
+      enabled: true
+      max-connections: 10
 
 jwt:
   secret: ${JWT_KEY}
@@ -20,6 +27,11 @@ springdoc:
 
 server:
   port: 8085
+
+jms:
+  request-timeout-ms: 5000
+  queues:
+    trainer-workload: trainer.workload.queue
 
 eureka:
   client:
