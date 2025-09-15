@@ -42,6 +42,13 @@ spring:
     time-zone: UTC
     date-format: yyyy-MM-dd
 
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: gca
+    password: gca
+    pool:
+      enabled: false
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -108,6 +115,9 @@ security:
   brute-force:
     max-attempts: 3
     block-duration-minutes: 5
+
+jms:
+  request-timeout-ms: 5000
 
 eureka:
   client:
