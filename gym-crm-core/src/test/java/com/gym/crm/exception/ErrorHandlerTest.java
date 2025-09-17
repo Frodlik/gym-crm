@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import static com.gym.crm.exception.ApiError.AUTHENTICATION_ERROR;
 import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
 import static com.gym.crm.exception.ApiError.INVALID_REQUEST_ERROR;
+import static com.gym.crm.exception.ApiError.JMS_ERROR;
 import static com.gym.crm.exception.ApiError.NOT_FOUND_ERROR;
 import static com.gym.crm.exception.ApiError.SERVER_ERROR;
 import static com.gym.crm.exception.ApiError.SERVICE_UNAVAILABLE;
@@ -130,6 +131,19 @@ class ErrorHandlerTest {
         assertEquals(UNAUTHORIZED, actual.getStatusCode());
         assertEquals(String.valueOf(AUTHENTICATION_ERROR.getCode()), actual.getBody().getErrorCode().toString());
         assertEquals(AUTHENTICATION_ERROR.getMessage(), actual.getBody().getErrorMessage());
+    }
+
+    @Test
+    void handleJmsMessageException_shouldReturnJmsError() {
+        String errorMessage = "Failed to send JMS message for trainer workload";
+        JmsMessageException ex = new JmsMessageException(errorMessage, new RuntimeException("Broker down"));
+
+        ResponseEntity<ErrorResponse> actual = errorHandler.handleJmsMessageException(ex);
+
+        assertNotNull(actual.getBody());
+        assertEquals(SERVICE_UNAVAILABLE.getHttpStatus(), actual.getStatusCode());
+        assertEquals(String.valueOf(JMS_ERROR.getCode()), actual.getBody().getErrorCode().toString());
+        assertTrue(actual.getBody().getErrorMessage().contains(JMS_ERROR.getMessage()));
     }
 
     @Test

@@ -1,17 +1,24 @@
 package com.gym.crm.service.integration.service;
 
-import com.gym.crm.exception.ServiceUnavailableException;
+import com.gym.crm.dto.trainer.TrainerWorkloadRequest;
+import com.gym.crm.exception.JmsMessageException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.User;
-import com.gym.crm.service.integration.client.WorkloadClient;
-import com.gym.crm.dto.trainer.TrainerWorkloadRequest;
+import com.gym.crm.util.QueueProperties;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
+import org.springframework.jms.JmsException;
+import org.springframework.jms.UncategorizedJmsException;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessagePostProcessor;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -23,79 +30,115 @@ import static com.gym.crm.dto.trainer.TrainerWorkloadRequest.ActionType.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class WorkloadServiceImplTest {
+    private static final String TRAINER_WORKLOAD_QUEUE = "trainer.workload.queue";
+    private static final String TRANSACTION_ID = "test-transaction-id";
+
     @Mock
-    private WorkloadClient workloadClient;
+    private JmsTemplate jmsTemplate;
+    @Mock
+    private QueueProperties queueProperties;
     @InjectMocks
     private WorkloadServiceImpl service;
 
+    @BeforeEach
+    void setUp() {
+        when(queueProperties.getTrainerWorkloadQueue()).thenReturn(TRAINER_WORKLOAD_QUEUE);
+    }
+
     @Test
-    void processTrainerWorkload_ShouldCallWorkloadClient() {
+    void processTrainerWorkload_ShouldCallJmsTemplate() {
         TrainerWorkloadRequest request = createAddWorkloadRequest();
 
         service.processTrainerWorkload(request);
 
-        verify(workloadClient).processWorkload(request);
+        verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
     }
 
     @Test
-    void processTrainerWorkload_ShouldPassCorrectRequestToClient() {
+    void processTrainerWorkload_ShouldPassCorrectRequestToJmsTemplate() {
         TrainerWorkloadRequest request = createDeleteWorkloadRequest();
 
         service.processTrainerWorkload(request);
 
-        verify(workloadClient).processWorkload(request);
+        verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
     }
 
     @Test
-    void deleteTraineeWorkloads_WhenTrainingsIsNull_ShouldNotCallWorkloadClient() {
-        service.deleteTraineeWorkloads(null);
+    void processTrainerWorkload_WhenJmsExceptionOccurs_ShouldThrowJmsMessageException() {
+        TrainerWorkloadRequest request = createAddWorkloadRequest();
+        JmsException jmsException = new UncategorizedJmsException("JMS error");
 
-        verify(workloadClient, never()).processWorkload(any());
+        doThrow(jmsException).when(jmsTemplate).convertAndSend(anyString(), any(), any(MessagePostProcessor.class));
+
+        JmsMessageException exception = assertThrows(JmsMessageException.class,
+                () -> service.processTrainerWorkload(request));
+
+        assertThat(exception.getMessage()).contains("Failed to send JMS message for trainer workload");
+        assertThat(exception.getCause()).isEqualTo(jmsException);
     }
 
     @Test
-    void deleteTraineeWorkloads_WhenTrainingsIsEmpty_ShouldNotCallWorkloadClient() {
-        Set<Training> emptyTrainings = new HashSet<>();
+    void processTrainerWorkload_ShouldUseExistingTransactionIdFromMDC() {
+        try (MockedStatic<MDC> mdcMock = mockStatic(MDC.class)) {
+            mdcMock.when(() -> MDC.get("transactionId")).thenReturn(TRANSACTION_ID);
 
-        service.deleteTraineeWorkloads(emptyTrainings);
+            TrainerWorkloadRequest request = createAddWorkloadRequest();
 
-        verify(workloadClient, never()).processWorkload(any());
+            service.processTrainerWorkload(request);
+
+            verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
+        }
     }
 
     @Test
-    void deleteTraineeWorkloads_WithMultipleTrainings_ShouldCallWorkloadClientForEach() {
+    void processTrainerWorkload_ShouldGenerateNewTransactionIdWhenMDCIsEmpty() {
+        try (MockedStatic<MDC> mdcMock = mockStatic(MDC.class)) {
+            mdcMock.when(() -> MDC.get("transactionId")).thenReturn(null);
+
+            TrainerWorkloadRequest request = createAddWorkloadRequest();
+
+            service.processTrainerWorkload(request);
+
+            mdcMock.verify(() -> MDC.put(eq("transactionId"), anyString()));
+            verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
+        }
+    }
+
+    @Test
+    void deleteTraineeWorkloads_WithMultipleTrainings_ShouldCallJmsTemplateForEach() {
         Set<Training> trainings = createTrainingsSet(3);
 
         service.deleteTraineeWorkloads(trainings);
 
-        verify(workloadClient, times(3)).processWorkload(any(TrainerWorkloadRequest.class));
-
+        verify(jmsTemplate, times(3)).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), any(TrainerWorkloadRequest.class), any(MessagePostProcessor.class));
         ArgumentCaptor<TrainerWorkloadRequest> captor = ArgumentCaptor.forClass(TrainerWorkloadRequest.class);
-        verify(workloadClient, times(3)).processWorkload(captor.capture());
-
+        verify(jmsTemplate, times(3)).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), captor.capture(), any(MessagePostProcessor.class));
         List<TrainerWorkloadRequest> capturedRequests = captor.getAllValues();
         assertThat(capturedRequests).hasSize(3);
         assertThat(capturedRequests).allMatch(req -> req.getActionType() == DELETE);
+        assertThat(capturedRequests).allMatch(req -> req.getTrainerUsername().startsWith("trainer"));
     }
 
     @Test
     void deleteTraineeWorkloads_WhenServiceUnavailable_ShouldThrowException() {
         Set<Training> trainings = createTrainingsSet(1);
-        ServiceUnavailableException exception = new ServiceUnavailableException("Service unavailable");
+        JmsException jmsException = new UncategorizedJmsException("JMS error");
 
-        doThrow(exception).when(workloadClient).processWorkload(any());
+        doThrow(jmsException).when(jmsTemplate).convertAndSend(anyString(), any(), any(MessagePostProcessor.class));
 
-        assertThrows(ServiceUnavailableException.class,
+        assertThrows(JmsMessageException.class,
                 () -> service.deleteTraineeWorkloads(trainings));
-
-        verify(workloadClient, times(1)).processWorkload(any());
+        verify(jmsTemplate, times(1)).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), any(TrainerWorkloadRequest.class), any(MessagePostProcessor.class));
     }
 
     private TrainerWorkloadRequest createAddWorkloadRequest() {
