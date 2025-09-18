@@ -14,6 +14,7 @@ Before you build or run the project, make sure the following software is install
 | Maven      | 3.8+            |
 | Docker     | 20.10+          |
 | MySQL      | 8.0+            |
+| ActiveMQ   | latest          |
 
 > ⚠️ **Important:** Docker must be running for tests to execute successfully as project uses Testcontainers for integration testing.
 
@@ -28,7 +29,6 @@ CREATE USER 'gcauser'@'localhost' IDENTIFIED BY 'gcauser';
 GRANT ALL PRIVILEGES ON gym_crm.* TO 'gcauser'@'localhost';
 ```
 2. ## Environment Variables
-Create a .env file in the root directory of the project with the following configuration:
 
 ```
 # Database Configuration
@@ -39,6 +39,14 @@ DB_URL=jdbc:mysql://localhost:3306/gym_crm
 # Liquibase Configuration
 LIQUIBASE_CONTEXTS=dev
 DB_SCHEMA=gym_crm
+
+# ActiveMQ Configuration
+ACTIVEMQ_BROKER_URL = tcp://localhost:61616
+ACTIVEMQ_USER = gca
+ACTIVEMQ_PASSWORD = gca
+
+# JWT Configuration
+JWT_KEY=u8Z4vN3kXxM2qB7eG9TfRjL5cPwYhQsDzVuAiKmNzXtGbHoC
 ```
 
 3. ## Run the Application
