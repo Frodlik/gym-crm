@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.jms.JmsException;
@@ -33,7 +32,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +51,7 @@ class WorkloadServiceImplTest {
     @BeforeEach
     void setUp() {
         when(queueProperties.getTrainerWorkloadQueue()).thenReturn(TRAINER_WORKLOAD_QUEUE);
+        MDC.clear();
     }
 
     @Test
@@ -89,29 +88,22 @@ class WorkloadServiceImplTest {
 
     @Test
     void processTrainerWorkload_ShouldUseExistingTransactionIdFromMDC() {
-        try (MockedStatic<MDC> mdcMock = mockStatic(MDC.class)) {
-            mdcMock.when(() -> MDC.get("transactionId")).thenReturn(TRANSACTION_ID);
+        MDC.put("transactionId", TRANSACTION_ID);
+        TrainerWorkloadRequest request = createAddWorkloadRequest();
 
-            TrainerWorkloadRequest request = createAddWorkloadRequest();
+        service.processTrainerWorkload(request);
 
-            service.processTrainerWorkload(request);
-
-            verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
-        }
+        verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
     }
 
     @Test
     void processTrainerWorkload_ShouldGenerateNewTransactionIdWhenMDCIsEmpty() {
-        try (MockedStatic<MDC> mdcMock = mockStatic(MDC.class)) {
-            mdcMock.when(() -> MDC.get("transactionId")).thenReturn(null);
+        TrainerWorkloadRequest request = createAddWorkloadRequest();
 
-            TrainerWorkloadRequest request = createAddWorkloadRequest();
+        service.processTrainerWorkload(request);
 
-            service.processTrainerWorkload(request);
-
-            mdcMock.verify(() -> MDC.put(eq("transactionId"), anyString()));
-            verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
-        }
+        assertThat(MDC.get("transactionId")).isNotNull();
+        verify(jmsTemplate).convertAndSend(eq(TRAINER_WORKLOAD_QUEUE), eq(request), any(MessagePostProcessor.class));
     }
 
     @Test
