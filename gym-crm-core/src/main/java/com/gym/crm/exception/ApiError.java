@@ -19,6 +19,7 @@ public enum ApiError {
     SERVER_ERROR(3200, "Internal processing error", INTERNAL_SERVER_ERROR),
     DATABASE_ERROR(3358, "Unexpected database access failure", INTERNAL_SERVER_ERROR),
     TOO_MANY_REQUESTS_ERROR(4290, "Too many requests, please try again later", TOO_MANY_REQUESTS),
+    JMS_ERROR(5020, "Failed to process JMS message: ", HttpStatus.SERVICE_UNAVAILABLE),
     SERVICE_UNAVAILABLE(5030, "Service is currently unavailable", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final int code;

@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import static com.gym.crm.exception.ApiError.AUTHENTICATION_ERROR;
 import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
 import static com.gym.crm.exception.ApiError.INVALID_REQUEST_ERROR;
+import static com.gym.crm.exception.ApiError.JMS_ERROR;
 import static com.gym.crm.exception.ApiError.NOT_FOUND_ERROR;
 import static com.gym.crm.exception.ApiError.SERVER_ERROR;
 import static com.gym.crm.exception.ApiError.TOO_MANY_REQUESTS_ERROR;
@@ -72,13 +73,6 @@ public class ErrorHandler {
         return buildErrorResponse(VALIDATION_ERROR, cleanedMessage);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleUnhandledExceptions(Exception ex) {
-        logger.error("Unhandled Exception: {}", ex.getMessage(), ex);
-
-        return buildErrorResponse(SERVER_ERROR);
-    }
-
     @ExceptionHandler(NotAuthenticatedException.class)
     public ResponseEntity<ErrorResponse> handleUserNotAuthenticatedExceptions(Exception ex) {
         logger.error("Authentication Exception: {}", ex.getMessage(), ex);
@@ -93,9 +87,22 @@ public class ErrorHandler {
         return buildErrorResponse(TOO_MANY_REQUESTS_ERROR);
     }
 
+    @ExceptionHandler(JmsMessageException.class)
+    public ResponseEntity<ErrorResponse> handleJmsMessageException(JmsMessageException ex) {
+        logger.error("JMS message error: {}", ex.getMessage());
+
+        return buildErrorResponse(JMS_ERROR);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleUnhandledExceptions(Exception ex) {
+        logger.error("Unhandled Exception: {}", ex.getMessage(), ex);
+
+        return buildErrorResponse(SERVER_ERROR);
+    }
+
     private ResponseEntity<ErrorResponse> buildErrorResponse(ApiError apiError) {
         return buildErrorResponse(apiError, null);
-
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(ApiError apiError, String message) {

@@ -1,6 +1,7 @@
 package com.gym.crm.workloadservice.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gym.crm.openapi.model.TrainerWorkloadRequest;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.jms.pool.PooledConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,9 @@ import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableJms
@@ -65,6 +69,10 @@ public class ActiveMQConfig {
         converter.setObjectMapper(objectMapper);
         converter.setTargetType(MessageType.TEXT);
         converter.setTypeIdPropertyName("_type");
+
+        Map<String, Class<?>> typeIdMappings = new HashMap<>();
+        typeIdMappings.put("com.gym.crm.dto.trainer.TrainerWorkloadRequest", TrainerWorkloadRequest.class);
+        converter.setTypeIdMappings(typeIdMappings);
 
         return converter;
     }
