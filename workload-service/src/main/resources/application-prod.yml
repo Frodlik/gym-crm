@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: workload-service
   datasource:
     url: jdbc:h2:mem:workloaddb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -19,21 +17,3 @@ spring:
 
 jwt:
   secret: ${JWT_KEY}
-
-springdoc:
-  swagger-ui:
-    url: /workload-api.yaml
-    path: /swagger-ui.html
-
-server:
-  port: 8085
-
-jms:
-  request-timeout-ms: 5000
-  queues:
-    trainer-workload: trainer.workload.queue
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka

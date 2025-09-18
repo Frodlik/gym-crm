@@ -43,9 +43,9 @@ spring:
     date-format: yyyy-MM-dd
 
   activemq:
-    broker-url: tcp://localhost:61616
-    user: gca
-    password: gca
+    broker-url: ${ACTIVEMQ_BROKER_URL}
+    user: ${ACTIVEMQ_USER}
+    password: ${ACTIVEMQ_PASSWORD}
     pool:
       enabled: true
       max-connections: 10
