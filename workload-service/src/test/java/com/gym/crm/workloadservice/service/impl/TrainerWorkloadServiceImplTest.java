@@ -20,7 +20,12 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @SpringBootTest
 @Transactional
 @TestPropertySource(properties = {
-        "jwt.secret=test-secret-key-for-testing-purposes-that-is-long-enough"
+        "jwt.secret=test-secret-key-for-testing-purposes-that-is-long-enough",
+        "spring.activemq.broker-url=vm://localhost?broker.persistent=false",
+        "spring.activemq.user=test",
+        "spring.activemq.password=test",
+        "spring.activemq.pool.enabled=false",
+        "spring.jms.listener.auto-startup=false"
 })
 class TrainerWorkloadServiceImplTest {
     @Autowired
