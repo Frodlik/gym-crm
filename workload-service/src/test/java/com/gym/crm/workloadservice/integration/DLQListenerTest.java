@@ -1,4 +1,4 @@
-package com.gym.crm.workloadservice.service.integration;
+package com.gym.crm.workloadservice.integration;
 
 import jakarta.jms.JMSException;
 import jakarta.jms.TextMessage;
