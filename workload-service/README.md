@@ -5,11 +5,15 @@ A service for calculating and processing trainer workload. It receives JMS messa
 ## Prerequisites
 Before you build or run the project, make sure the following software is installed on your machine:
 
-| Technology | Minimum Version | Purpose |
-|------------|-----------------|---------|
+| Technology | Minimum Version | Purpose          |
+|------------|-----------------|------------------|
 | Java | 21+ | Runtime environment |
-| Maven | 3.8+ | Build tool |
-| ActiveMQ | latest | Message broker |
+| Maven | 3.8+ | Build tool       |
+| Docker | 20+ | Testcontainerization |
+| MongoDB | latest | Database         |
+| ActiveMQ | latest | Message broker   |
+
+> ⚠️ **Important:** Docker must be running for tests to execute successfully as project uses Testcontainers for integration testing.
 
 ## Getting Started
 
@@ -41,6 +45,9 @@ ACTIVEMQ_PASSWORD=gca
 
 # JWT Configuration
 JWT_KEY=u8Z4vN3kXxM2qB7eG9TfRjL5cPwYhQsDzVuAiKmNzXtGbHoC
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/workloaddb
 ```
 
 ### 3. Start the Service
@@ -59,3 +66,12 @@ mvn spring-boot:run
 ```
 
 The service will be available at: **http://localhost:8085**
+
+### 4. Testing Requirements
+**Docker must be running** before executing tests. The integration tests use Testcontainers to:
+
+* Automatically provision MongoDB test containers
+* Run tests against real database instances
+* Ensure test isolation and consistency
+
+If Docker is not running, tests will fail with connection errors.
