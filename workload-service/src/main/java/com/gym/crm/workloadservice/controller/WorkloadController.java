@@ -28,7 +28,7 @@ public class WorkloadController {
     }
 
     @GetMapping("/workload/{username}")
-    public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(@PathVariable String username) {
+    public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(@PathVariable("username") String username) {
         TrainerWorkloadResponse response = trainerWorkloadService.getTrainerWorkload(username);
 
         return ResponseEntity.ok(response);
