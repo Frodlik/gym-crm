@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import java.util.Optional;
 @Service
 @Slf4j
 @Validated
-@Transactional
 @RequiredArgsConstructor
 public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     private final TrainerRepository trainerRepository;
@@ -89,7 +87,6 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     private Year addYearToTrainer(Trainer trainer, int yearNumber) {
         Year newYear = Year.builder()
                 .yearNumber(yearNumber)
-                .trainer(trainer)
                 .months(new ArrayList<>())
                 .build();
         trainer.getYears().add(newYear);
@@ -112,7 +109,6 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         Month newMonth = Month.builder()
                 .monthNumber(monthNumber)
                 .totalDurationMinutes(0)
-                .year(year)
                 .build();
         year.getMonths().add(newMonth);
 

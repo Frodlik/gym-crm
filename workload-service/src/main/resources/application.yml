@@ -1,14 +1,10 @@
 spring:
   application:
     name: workload-service
-  datasource:
-    url: jdbc:h2:mem:workloaddb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: workloaddb
   activemq:
     broker-url: ${ACTIVEMQ_BROKER_URL}
     user: ${ACTIVEMQ_USER}
@@ -32,7 +28,7 @@ jms:
   request-timeout-ms: 5000
   queues:
     trainer-workload: trainer.workload.queue
-    trainer-workload-dlq: trainer.workload.dlq
+    trainer-workload-dlq: ActiveMQ.DLQ
 
 eureka:
   client:
