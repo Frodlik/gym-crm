@@ -1,4 +1,4 @@
-package com.gym.crm.workloadservice.service.integration;
+package com.gym.crm.workloadservice.integration;
 
 import com.gym.crm.openapi.model.TrainerWorkloadRequest;
 import com.gym.crm.workloadservice.service.impl.TrainerWorkloadServiceImpl;
