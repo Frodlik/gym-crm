@@ -1,3 +1,10 @@
 spring:
   application:
     name: integration-tests
+  data:
+    mongodb:
+      uri: mongodb://localhost:27018/testdb
+      database: testdb
+
+jwt:
+  secret: test-secret-key-for-integration-tests-minimum-32-characters
