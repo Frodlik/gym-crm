@@ -58,12 +58,12 @@ public class WorkloadStepDefinitions {
                 .get(BASE_URL + endpoint);
     }
 
-    @Then("the response status should be {int}")
+    @Then("response status should be {int}")
     public void theResponseStatusShouldBe(int expectedStatus) {
         response.then().statusCode(expectedStatus);
     }
 
-    @Then("the response should contain trainer {string} with workload data")
+    @Then("response should contain trainer {string} with workload data")
     public void theResponseShouldContainTrainerWithWorkloadData(String username) throws Exception {
         String body = response.getBody().asString();
         assertNotNull(body);
@@ -75,7 +75,7 @@ public class WorkloadStepDefinitions {
         assertNotNull(responseBody.get("years"));
     }
 
-    @Then("the trainer workload duration should be {int}")
+    @Then("trainer workload duration should be {int}")
     public void theTrainerWorkloadDurationShouldBe(int expectedDuration) throws Exception {
         String body = response.getBody().asString();
         Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
@@ -83,12 +83,25 @@ public class WorkloadStepDefinitions {
         assertEquals(expectedDuration, responseBody.get("trainingDuration"));
     }
 
-    @Then("the response should contain field {string} with value {string}")
+    @Then("response should contain field {string} with value {string}")
     public void theResponseShouldContainValidationErrorMessage(String fieldName, String expectedValue) {
         String body = response.getBody().asString();
 
         assertNotNull(body);
         assertTrue(body.contains(fieldName));
         assertTrue(body.contains(expectedValue));
+    }
+
+    @Then("I received error with next attributes:")
+    public void iReceivedErrorWithNextAttributes(DataTable dataTable) throws Exception {
+        Map<String, String> expectedAttributes = dataTable.asMap(String.class, String.class);
+
+        String body = response.getBody().asString();
+        assertNotNull(body);
+
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+
+        assertEquals(expectedAttributes.get("errorCode"), String.valueOf(responseBody.get("errorCode")));
+        assertEquals(expectedAttributes.get("errorMessage"), String.valueOf(responseBody.get("errorMessage")));
     }
 }

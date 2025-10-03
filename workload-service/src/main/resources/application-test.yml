@@ -7,8 +7,8 @@ spring:
       database: testdb
   activemq:
     broker-url: tcp://localhost:61616
-    user: admin
-    password: admin
+    user: test
+    password: test
     pool:
       enabled: false
 
