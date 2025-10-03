@@ -59,6 +59,7 @@ public class ActiveMQConfig {
         factory.setMessageConverter(messageConverter);
         factory.setConcurrency("1-3");
         factory.setReceiveTimeout(jmsRequestTimeout);
+        factory.setSessionTransacted(true);
 
         return factory;
     }
