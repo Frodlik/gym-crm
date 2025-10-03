@@ -2,6 +2,7 @@ package com.gym.crm.integrationtests.steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.integrationtests.util.JwtTokenGenerator;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,7 +13,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 public class WorkloadStepDefinitions {
@@ -34,7 +37,11 @@ public class WorkloadStepDefinitions {
     }
 
     @When("I send POST request to {string} with body:")
-    public void iSendPostRequestWithBody(String endpoint, String requestBody) {
+    public void iSendPostRequestWithBody(String endpoint, DataTable dataTable) throws Exception {
+        Map<String, String> tableMap = dataTable.asMap(String.class, String.class);
+
+        String requestBody = objectMapper.writeValueAsString(tableMap);
+
         response = RestAssured
                 .given()
                 .header(HEADER_AUTHORIZATION, BEARER_PREFIX + authToken)
@@ -68,12 +75,20 @@ public class WorkloadStepDefinitions {
         assertNotNull(responseBody.get("years"));
     }
 
-    @Then("the response should contain validation error message")
-    public void theResponseShouldContainValidationErrorMessage() {
+    @Then("the trainer workload duration should be {int}")
+    public void theTrainerWorkloadDurationShouldBe(int expectedDuration) throws Exception {
         String body = response.getBody().asString();
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+
+        assertEquals(expectedDuration, responseBody.get("trainingDuration"));
+    }
+
+    @Then("the response should contain field {string} with value {string}")
+    public void theResponseShouldContainValidationErrorMessage(String fieldName, String expectedValue) {
+        String body = response.getBody().asString();
+
         assertNotNull(body);
-        assertTrue(body.contains("error") ||
-                body.contains("validation") ||
-                body.contains("must be greater than or equal to 0"));
+        assertTrue(body.contains(fieldName));
+        assertTrue(body.contains(expectedValue));
     }
 }
