@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: workload-service-test
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/testdb
+      database: testdb
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: test
+    password: test
+    pool:
+      enabled: false
+
+jwt:
+  secret: test-secret-key-for-integration-tests-minimum-32-characters
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false
+
+server:
+  port: 8085
+
+jms:
+  request-timeout-ms: 3000
+  queues:
+    trainer-workload: test.trainer.workload.queue
+    trainer-workload-dlq: test.ActiveMQ.DLQ
+
+eureka:
+  client:
+    enabled: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    com.gym.crm: DEBUG
+    org.springframework.jms: WARN
+    org.mongodb.driver: WARN

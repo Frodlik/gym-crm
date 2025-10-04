@@ -44,7 +44,6 @@
     </properties>
 
     <modules>
-        <module>gym-crm-bom</module>
         <module>discovery-service</module>
         <module>gateway-service</module>
         <module>gym-crm-core</module>

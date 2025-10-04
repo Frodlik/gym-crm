@@ -1,0 +1,67 @@
+version: '3.9'
+name: gym-crm-test
+
+services:
+  mongodb-test:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=testdb
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - gym-network-test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  activemq-test:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    ports:
+      - "61617:61616"
+      - "8162:8161"
+    environment:
+      - ACTIVEMQ_USERNAME=test
+      - ACTIVEMQ_PASSWORD=test
+    networks:
+      - gym-network-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8161/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  workload-service-test:
+    build:
+      context: .
+      dockerfile: workload-service/Dockerfile
+    container_name: workload-service
+    ports:
+      - "8086:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/testdb
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=test
+      - SPRING_ACTIVEMQ_PASSWORD=test
+      - JWT_SECRET=test-secret-key-for-integration-tests-minimum-32-characters
+    depends_on:
+      mongodb-test:
+        condition: service_healthy
+      activemq-test:
+        condition: service_healthy
+    networks:
+      - gym-network-test
+    restart: on-failure
+
+volumes:
+  mongodb_data:
+
+networks:
+  gym-network-test:
+    driver: bridge
