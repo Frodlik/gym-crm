@@ -81,7 +81,7 @@ public class ErrorHandler {
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
+                .map(fieldError -> String.format("%s %s", fieldError.getField(), fieldError.getDefaultMessage()))
                 .findFirst()
                 .orElse("Validation error");
 
