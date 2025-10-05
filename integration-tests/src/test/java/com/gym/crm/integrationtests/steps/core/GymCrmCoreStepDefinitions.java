@@ -1,11 +1,11 @@
-package com.gym.crm.integrationtests.steps;
+package com.gym.crm.integrationtests.steps.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gym.crm.integrationtests.util.JwtTokenGenerator;
+import com.gym.crm.integrationtests.config.TestConfig;
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.spring.CucumberContextConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,45 +17,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
-public class WorkloadStepDefinitions {
-    private static final String BASE_URL = "http://localhost:8086";
-    private static final String HEADER_AUTHORIZATION = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
+@CucumberContextConfiguration
+@SpringBootTest(classes = TestConfig.class)
+public class GymCrmCoreStepDefinitions {
+    private static final String BASE_URL = "http://localhost:8091";
 
-    @Autowired
-    private JwtTokenGenerator jwtTokenGenerator;
     @Autowired
     private ObjectMapper objectMapper;
 
     private Response response;
-    private String authToken;
-
-    @Given("I am authenticated as {string}")
-    public void iAmAuthenticatedAs(String username) {
-        authToken = jwtTokenGenerator.generateValidToken(username, "ROLE_TRAINER");
-    }
 
     @When("I send POST request to {string} with body:")
     public void iSendPostRequestWithBody(String endpoint, DataTable dataTable) throws Exception {
-        Map<String, String> tableMap = dataTable.asMap(String.class, String.class);
+        Map<String, String> requestMap = dataTable.asMaps(String.class, String.class).getFirst();
 
-        String requestBody = objectMapper.writeValueAsString(tableMap);
+        String requestBody = objectMapper.writeValueAsString(requestMap);
 
         response = RestAssured
                 .given()
-                .header(HEADER_AUTHORIZATION, BEARER_PREFIX + authToken)
                 .contentType("application/json")
                 .body(requestBody)
                 .post(BASE_URL + endpoint);
-    }
-
-    @When("I send GET request to {string}")
-    public void iSendGetRequest(String endpoint) {
-        response = RestAssured
-                .given()
-                .header(HEADER_AUTHORIZATION, BEARER_PREFIX + authToken)
-                .get(BASE_URL + endpoint);
     }
 
     @Then("response status should be {int}")
@@ -63,33 +45,38 @@ public class WorkloadStepDefinitions {
         response.then().statusCode(expectedStatus);
     }
 
-    @Then("response should contain trainer {string} with workload data")
-    public void theResponseShouldContainTrainerWithWorkloadData(String username) throws Exception {
+    @Then("response should contain field {string} matching pattern {string}")
+    public void theResponseShouldContainFieldMatchingPattern(String fieldName, String pattern) throws Exception {
         String body = response.getBody().asString();
         assertNotNull(body);
 
         Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
-        assertEquals(username, responseBody.get("username"));
-        assertNotNull(responseBody.get("firstName"));
-        assertNotNull(responseBody.get("lastName"));
-        assertNotNull(responseBody.get("years"));
+        String fieldValue = (String) responseBody.get(fieldName);
+
+        assertNotNull(fieldValue);
+        assertTrue(fieldValue.matches(pattern));
     }
 
-    @Then("trainer workload duration should be {int}")
-    public void theTrainerWorkloadDurationShouldBe(int expectedDuration) throws Exception {
+    @Then("response should contain field {string} with minimum length {int}")
+    public void theResponseShouldContainFieldWithMinimumLength(String fieldName, int minLength) throws Exception {
+        String body = response.getBody().asString();
+        assertNotNull(body);
+
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+        String fieldValue = (String) responseBody.get(fieldName);
+
+        assertNotNull(fieldValue);
+        assertTrue(fieldValue.length() >= minLength);
+    }
+
+    @Then("response username should start with {string}")
+    public void theResponseUsernameShouldStartWith(String expectedPrefix) throws Exception {
         String body = response.getBody().asString();
         Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+        String username = (String) responseBody.get("username");
 
-        assertEquals(expectedDuration, responseBody.get("trainingDuration"));
-    }
-
-    @Then("response should contain field {string} with value {string}")
-    public void theResponseShouldContainValidationErrorMessage(String fieldName, String expectedValue) {
-        String body = response.getBody().asString();
-
-        assertNotNull(body);
-        assertTrue(body.contains(fieldName));
-        assertTrue(body.contains(expectedValue));
+        assertNotNull(username);
+        assertTrue(username.startsWith(expectedPrefix));
     }
 
     @Then("I received error with next attributes:")

@@ -10,8 +10,8 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 @Suite
 @IncludeEngines("cucumber")
-@SelectClasspathResource("features")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.gym.crm.integrationtests")
+@SelectClasspathResource("features/core")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.gym.crm.integrationtests.steps.core")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json")
-public class CucumberIntegrationTest {
+public class GymCrmCoreTest {
 }
