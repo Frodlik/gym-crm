@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -71,6 +72,20 @@ public class ErrorHandler {
         String cleanedMessage = extractConstraintMessage(ex.getMessage());
 
         return buildErrorResponse(VALIDATION_ERROR, cleanedMessage);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleSpringValidationExceptions(MethodArgumentNotValidException ex) {
+        logger.error("Validation Exception: {}", ex.getMessage(), ex);
+
+        String errorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation error");
+
+        return buildErrorResponse(VALIDATION_ERROR, errorMessage);
     }
 
     @ExceptionHandler(NotAuthenticatedException.class)
