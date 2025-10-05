@@ -7,9 +7,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.gym.crm.exception.ApiError.AUTHENTICATION_ERROR;
 import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
@@ -23,6 +28,8 @@ import static com.gym.crm.exception.ApiError.VALIDATION_ERROR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -121,6 +128,24 @@ class ErrorHandlerTest {
         assertTrue(actual.getBody().getErrorMessage().contains("Field must not be blank"));
     }
 
+
+    @Test
+    void handleSpringValidationExceptions_shouldReturnValidationErrorWithFieldMessage() throws NoSuchMethodException {
+        BindingResult bindingResult = mock(BindingResult.class);
+        FieldError fieldError = new FieldError("traineeRequest", "firstName", "must not be blank");
+
+        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+
+        MethodParameter methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("dummyMethod", String.class), 0);
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(methodParameter, bindingResult);
+        ResponseEntity<ErrorResponse> actual = errorHandler.handleSpringValidationExceptions(ex);
+
+        assertNotNull(actual.getBody());
+        assertEquals(BAD_REQUEST, actual.getStatusCode());
+        assertEquals(String.valueOf(VALIDATION_ERROR.getCode()), actual.getBody().getErrorCode().toString());
+        assertTrue(actual.getBody().getErrorMessage().contains("firstName must not be blank"));
+    }
+
     @Test
     void handleUserNotAuthenticatedExceptions_shouldReturnAuthenticationError() {
         NotAuthenticatedException ex = new NotAuthenticatedException("No token");
@@ -192,6 +217,9 @@ class ErrorHandlerTest {
         assertNotNull(actual.getBody());
         assertEquals(TOO_MANY_REQUESTS, actual.getStatusCode());
         assertTrue(actual.getBody().getErrorMessage().contains("Too many requests"));
+    }
+
+    private void dummyMethod(String param) {
     }
 }
 
