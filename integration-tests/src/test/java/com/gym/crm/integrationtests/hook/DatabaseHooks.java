@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 public class DatabaseHooks {
     private final MongoTemplate mongoTemplate;
 
-    @Before
+    @Before("@workload")
     public void setUp() {
         mongoTemplate.getDb().drop();
     }

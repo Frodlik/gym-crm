@@ -1,5 +1,6 @@
-package com.gym.crm.integrationtests;
+package com.gym.crm.integrationtests.config;
 
+import com.gym.crm.integrationtests.CucumberIntegrationTestsApplication;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 

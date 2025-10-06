@@ -1,0 +1,122 @@
+spring:
+  application:
+    name: gym-crm-test
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/gym_crm_test
+    username: testuser
+    password: testpass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 10
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  liquibase:
+    enabled: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    date-format: yyyy-MM-dd
+
+  activemq:
+    broker-url: tcp://localhost:61617
+    user: test
+    password: test
+    pool:
+      enabled: false
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
+gca:
+  cors:
+    allowed-origins: "*"
+  metrics:
+    disk-space-threshold-bytes: 104857600
+
+jwt:
+  secret: test-secret-key-for-integration-tests-minimum-32-characters-long
+  expiration: 900
+  cookie:
+    name: access-token
+    secure: false
+    http-only: true
+  refresh:
+    expiration: 604800
+    cookie:
+      name: refresh-token
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      workloadService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: false
+  port: 8090
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5
+
+jms:
+  request-timeout-ms: 3000
+  queues:
+    trainer-workload: test.trainer.workload.queue
+
+eureka:
+  client:
+    enabled: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    com.gym.crm: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    liquibase: INFO

@@ -2,6 +2,28 @@ version: '3.9'
 name: gym-crm-test
 
 services:
+  mysql-test:
+    image: mysql:8.0
+    container_name: mysql-test
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=gym_crm_test
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - gym-network-test
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "testuser", "-ptestpass" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
   mongodb-test:
     image: mongo:latest
     container_name: mongodb
@@ -36,6 +58,34 @@ services:
       timeout: 5s
       retries: 5
 
+  gym-crm-core-test:
+    build:
+      context: .
+      dockerfile: gym-crm-core/Dockerfile
+    container_name: gym-crm-core-test
+    ports:
+      - "8091:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=integration-test
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-test:3306/gym_crm_test
+      - SPRING_DATASOURCE_USERNAME=testuser
+      - SPRING_DATASOURCE_PASSWORD=testpass
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq-test:61616
+      - SPRING_ACTIVEMQ_USER=test
+      - SPRING_ACTIVEMQ_PASSWORD=test
+      - JWT_KEY=test-secret-key-for-integration-tests-minimum-32-characters-long
+      - ACTIVEMQ_BROKER_URL=tcp://activemq-test:61616
+      - ACTIVEMQ_USER=test
+      - ACTIVEMQ_PASSWORD=test
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      activemq-test:
+        condition: service_healthy
+    networks:
+      - gym-network-test
+    restart: on-failure
+
   workload-service-test:
     build:
       context: .
@@ -60,6 +110,7 @@ services:
     restart: on-failure
 
 volumes:
+  mysql_data:
   mongodb_data:
 
 networks:
