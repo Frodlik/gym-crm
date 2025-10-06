@@ -5,7 +5,7 @@ Feature: Trainer Workload Management
 
   Scenario: Successfully add training workload and retrieve trainer data
     Given I am authenticated as "kiyotaka.ayanokoji"
-    When I send POST request to "/api/v1/trainers/workload" with body:
+    When I create new trainer workload with following details:
       | field             | value                 |
       | trainerUsername   | kiyotaka.ayanokoji    |
       | trainerFirstName  | Kiyotaka              |
@@ -15,13 +15,13 @@ Feature: Trainer Workload Management
       | trainingDuration  | 90                    |
       | actionType        | ADD                   |
     Then response status should be 200
-    When I send GET request to "/api/v1/trainers/workload/kiyotaka.ayanokoji"
+    When I retrieve workload data for trainer "kiyotaka.ayanokoji"
     Then response status should be 200
     And response should contain trainer "kiyotaka.ayanokoji" with workload data
 
   Scenario: Successfully delete training workload for trainer
     Given I am authenticated as "kiyotaka.ayanokoji"
-    When I send POST request to "/api/v1/trainers/workload" with body:
+    When I create new trainer workload with following details:
       | field             | value                 |
       | trainerUsername   | kiyotaka.ayanokoji    |
       | trainerFirstName  | Kiyotaka              |
@@ -34,7 +34,7 @@ Feature: Trainer Workload Management
 
   Scenario: Fail to add workload with invalid duration
     Given I am authenticated as "jane.trainer"
-    When I send POST request to "/api/v1/trainers/workload" with body:
+    When I create new trainer workload with following details:
       | field             | value           |
       | trainerUsername   | jane.trainer    |
       | trainerFirstName  | Jane            |
