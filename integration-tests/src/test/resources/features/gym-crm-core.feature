@@ -4,7 +4,7 @@ Feature: Trainee Management
   I want to be able to register and validate trainee data
 
   Scenario: Successfully register a new trainee
-    When I send POST request to "/api/v1/trainees/register" with body:
+    When I register new trainee with following details:
       | firstName   | lastName     | dateOfBirth | address       |
       | Billy       | Herrington   | 2000-03-22  | 123 Main St   |
     Then response status should be 200
@@ -13,7 +13,7 @@ Feature: Trainee Management
     And response username should start with "billy.herrington"
 
   Scenario: Fail to register trainee with missing required fields
-    When I send POST request to "/api/v1/trainees/register" with body:
+    When I register new trainee with following details:
       | firstName |
       | Billy     |
     Then I received error with next attributes:
