@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class DLQListener {
-    @JmsListener(destination = "${app.queues.trainer-workload-dlq:trainer.workload.dlq}")
+    @JmsListener(destination = "${jms.queues.trainer-workload-dlq:trainer.workload.dlq}")
     public void handleFailedMessages(Message message) {
         try {
             String trainerUsername = message.getStringProperty("trainerUsername");
