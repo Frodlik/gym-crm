@@ -125,4 +125,38 @@ public class GymCrmCoreStepDefinitions {
 
         testContext.setAuthToken(token);
     }
+
+    @When("I request trainee profile for {string}")
+    public void iRequestTraineeProfileFor(String username) {
+        String endpoint = String.format("/trainees/%s", username);
+
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", "access-token=" + testContext.getAuthToken())
+                .get(BASE_URL + endpoint);
+
+        testContext.setResponse(response);
+    }
+
+    @When("I request trainee profile for {string} without authentication")
+    public void iRequestTraineeProfileForWithoutAuth(String username) {
+        String endpoint = String.format("/trainees/%s", username);
+
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .get(BASE_URL + endpoint);
+
+        testContext.setResponse(response);
+    }
+
+    @Then("response should contain field {string} with value {string}")
+    public void responseShouldContainFieldWithValue(String field, String expectedValue) throws Exception {
+        String body = testContext.getResponse().getBody().asString();
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+
+        assertTrue(responseBody.containsKey(field));
+        assertEquals(expectedValue, responseBody.get(field));
+    }
 }
