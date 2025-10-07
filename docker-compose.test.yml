@@ -26,7 +26,7 @@ services:
 
   mongodb-test:
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb-test
     ports:
       - "27018:27017"
     environment:
@@ -43,7 +43,7 @@ services:
 
   activemq-test:
     image: rmohr/activemq:latest
-    container_name: activemq
+    container_name: activemq-test
     ports:
       - "61617:61616"
       - "8162:8161"
@@ -90,13 +90,13 @@ services:
     build:
       context: .
       dockerfile: workload-service/Dockerfile
-    container_name: workload-service
+    container_name: workload-service-test
     ports:
       - "8086:8085"
     environment:
       - SPRING_PROFILES_ACTIVE=integration-test
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/testdb
-      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb-test:27017/testdb
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq-test:61616
       - SPRING_ACTIVEMQ_USER=test
       - SPRING_ACTIVEMQ_PASSWORD=test
       - JWT_SECRET=test-secret-key-for-integration-tests-minimum-32-characters
