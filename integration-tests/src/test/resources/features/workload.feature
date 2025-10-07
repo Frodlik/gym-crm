@@ -18,6 +18,7 @@ Feature: Trainer Workload Management
     When I retrieve workload data for trainer "kiyotaka.ayanokoji"
     Then response status should be 200
     And response should contain trainer "kiyotaka.ayanokoji" with workload data
+    And workload should contain duration 90 minutes
 
   Scenario: Successfully delete training workload for trainer
     Given I am authenticated as "kiyotaka.ayanokoji"

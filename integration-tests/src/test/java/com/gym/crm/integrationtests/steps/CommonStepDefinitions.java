@@ -6,6 +6,7 @@ import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Map;
 
@@ -17,6 +18,8 @@ public class CommonStepDefinitions {
     private TestContext testContext;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Given("I am not authenticated")
     public void iAmNotAuthenticated() {
@@ -37,5 +40,10 @@ public class CommonStepDefinitions {
         Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
         assertEquals(expectedAttributes.get("errorCode"), String.valueOf(responseBody.get("errorCode")));
         assertEquals(expectedAttributes.get("errorMessage"), String.valueOf(responseBody.get("errorMessage")));
+    }
+
+    @Given("specialization {string} exists")
+    public void specializationExists(String specializationName) {
+        jdbcTemplate.update("INSERT INTO training_types (training_type_name) VALUES (?)", specializationName);
     }
 }

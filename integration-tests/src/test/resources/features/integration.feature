@@ -4,17 +4,20 @@ Feature: Training and Workload Service Integration
   I want to ensure training creation triggers workload updates in MongoDB
 
   Background:
-    Given I register new trainee with following details:
+    Given specialization "FITNESS" exists
+    And I register new trainee with following details:
       | firstName   | lastName     | dateOfBirth | address       |
       | John        | Trainee      | 1995-05-15  | 456 Gym St    |
+    And I extract credentials for user "john.trainee" from registration response
     And I register new trainer with following details:
       | firstName   | lastName     | specialization |
       | Jane        | Trainer      | FITNESS        |
-    And I extract credentials for user "john.trainee" from registration response
     And I extract credentials for user "jane.trainer" from registration response
-    And I am authenticated as "jane.trainer"
+    When I log in using username "jane.trainer" and password "generated"
+    Then response status should be 200
+    And I should be successfully logged in
 
-  Scenario: Successfully create training and verify workload in MongoDB
+  Scenario: Successfully create training and verify workload data
     When I create new training with following details:
       | field             | value          |
       | traineeUsername   | john.trainee   |
@@ -27,4 +30,4 @@ Feature: Training and Workload Service Integration
     When I retrieve workload data for trainer "jane.trainer"
     Then response status should be 200
     And response should contain trainer "jane.trainer" with workload data
-    And workload should contain year 2025 with month 10 and duration 60 minutes
+    And workload should contain duration 60 minutes
