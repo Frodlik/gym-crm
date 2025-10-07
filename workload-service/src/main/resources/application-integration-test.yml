@@ -6,7 +6,7 @@ spring:
       uri: mongodb://localhost:27017/testdb
       database: testdb
   activemq:
-    broker-url: tcp://localhost:61616
+    broker-url: tcp://localhost:61617
     user: test
     password: test
     pool:
@@ -28,7 +28,7 @@ jms:
   request-timeout-ms: 3000
   queues:
     trainer-workload: test.trainer.workload.queue
-    trainer-workload-dlq: test.ActiveMQ.DLQ
+    trainer-workload-dlq: ActiveMQ.DLQ
 
 eureka:
   client:

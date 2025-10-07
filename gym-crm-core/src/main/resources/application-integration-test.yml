@@ -67,7 +67,7 @@ gca:
     disk-space-threshold-bytes: 104857600
 
 jwt:
-  secret: test-secret-key-for-integration-tests-minimum-32-characters-long
+  secret: test-secret-key-for-integration-tests-minimum-32-characters
   expiration: 900
   cookie:
     name: access-token
