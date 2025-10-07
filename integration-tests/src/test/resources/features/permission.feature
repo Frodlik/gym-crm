@@ -19,6 +19,6 @@ Feature: Trainee profile permissions
     And response should contain field "lastName" with value "Herrington"
 
   Scenario: Failed access to trainee profile without authentication
-    When I request trainee profile for "billy.herrington" without authentication
+    Given I am not authenticated
+    When I request trainee profile for "billy.herrington"
     Then response status should be 401
-# TODO:

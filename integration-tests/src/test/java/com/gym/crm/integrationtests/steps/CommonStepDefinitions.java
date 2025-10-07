@@ -3,6 +3,7 @@ package com.gym.crm.integrationtests.steps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.integrationtests.steps.context.TestContext;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,6 +17,11 @@ public class CommonStepDefinitions {
     private TestContext testContext;
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Given("I am not authenticated")
+    public void iAmNotAuthenticated() {
+        testContext.setAuthToken(null);
+    }
 
     @Then("response status should be {int}")
     public void theResponseStatusShouldBe(int expectedStatus) {
