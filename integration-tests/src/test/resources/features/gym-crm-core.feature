@@ -3,6 +3,7 @@ Feature: Trainee Management
   As a gym system user
   I want to be able to register and validate trainee data
 
+  @PositiveScenario
   Scenario: Successfully register a new trainee
     When I register new trainee with following details:
       | firstName   | lastName     | dateOfBirth | address       |
@@ -12,6 +13,7 @@ Feature: Trainee Management
     And response should contain field "password" with minimum length 10
     And response username should start with "billy.herrington"
 
+  @NegativeScenario
   Scenario: Fail to register trainee with missing required fields
     When I register new trainee with following details:
       | firstName |
