@@ -2,6 +2,7 @@ Feature: User registration and login
   As a new user of the Gym CRM system,
   I want to register and log in using the credentials I receive after registration
 
+  @PositiveScenario
   Scenario: Successful login using generated credentials
     Given I register new trainee with following details:
       | firstName   | lastName     | dateOfBirth | address       |
@@ -12,6 +13,7 @@ Feature: User registration and login
     Then response status should be 200
     And I should be successfully logged in
 
+  @NegativeScenario
   Scenario: Failed login attempt with invalid password
     Given I register new trainee with following details:
       | firstName   | lastName     | dateOfBirth | address       |

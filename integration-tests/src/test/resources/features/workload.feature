@@ -3,6 +3,7 @@ Feature: Trainer Workload Management
   As an authenticated trainer
   I want to be able to add and validate training workload data
 
+  @PositiveScenario
   Scenario: Successfully add training workload and retrieve trainer data
     Given I am authenticated as "kiyotaka.ayanokoji"
     When I create new trainer workload with following details:
@@ -20,6 +21,7 @@ Feature: Trainer Workload Management
     And response should contain trainer "kiyotaka.ayanokoji" with workload data
     And workload should contain duration 90 minutes
 
+  @PositiveScenario
   Scenario: Successfully delete training workload for trainer
     Given I am authenticated as "kiyotaka.ayanokoji"
     When I create new trainer workload with following details:
@@ -33,6 +35,7 @@ Feature: Trainer Workload Management
       | actionType        | DELETE                |
     Then response status should be 200
 
+  @NegativeScenario
   Scenario: Fail to add workload with invalid duration
     Given I am authenticated as "jane.trainer"
     When I create new trainer workload with following details:

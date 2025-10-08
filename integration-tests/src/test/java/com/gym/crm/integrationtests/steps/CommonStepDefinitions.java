@@ -3,11 +3,13 @@ package com.gym.crm.integrationtests.steps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.integrationtests.steps.context.TestContext;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,5 +47,23 @@ public class CommonStepDefinitions {
     @Given("specialization {string} exists")
     public void specializationExists(String specializationName) {
         jdbcTemplate.update("INSERT INTO training_types (training_type_name) VALUES (?)", specializationName);
+    }
+
+    @And("ActiveMQ container is stopped")
+    public void stopActiveMQContainer() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(
+                "docker", "pause", "activemq-test"
+        );
+        Process process = pb.start();
+        process.waitFor();
+    }
+
+    @And("ActiveMQ container is running")
+    public void runActiveMQContainer() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(
+                "docker", "unpause", "activemq-test"
+        );
+        Process process = pb.start();
+        process.waitFor();
     }
 }

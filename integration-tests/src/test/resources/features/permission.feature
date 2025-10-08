@@ -9,6 +9,7 @@ Feature: Trainee profile permissions
     Then response status should be 200
     And I extract credentials for user "billy.herrington" from registration response
 
+  @PositiveScenario
   Scenario: Successful access to trainee profile with valid token
     When I log in using username "billy.herrington" and password "generated"
     Then response status should be 200
@@ -18,6 +19,7 @@ Feature: Trainee profile permissions
     And response should contain field "firstName" with value "Billy"
     And response should contain field "lastName" with value "Herrington"
 
+  @NegativeScenario
   Scenario: Failed access to trainee profile without authentication
     Given I am not authenticated
     When I request trainee profile for "billy.herrington"
