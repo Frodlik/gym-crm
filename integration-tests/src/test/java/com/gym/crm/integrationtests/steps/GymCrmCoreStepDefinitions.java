@@ -46,6 +46,7 @@ public class GymCrmCoreStepDefinitions {
 
     @When("I update trainee {string} profile with following details:")
     public void iUpdateTraineeProfileWithFollowingDetails(String username, DataTable dataTable) throws Exception {
+        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
         Map<String, String> updateMap = dataTable.asMaps(String.class, String.class).getFirst();
 
         Map<String, Object> requestBody = new HashMap<>();
@@ -53,10 +54,7 @@ public class GymCrmCoreStepDefinitions {
         putIfValid(requestBody, "lastName", updateMap.get("lastName"));
         putIfValid(requestBody, "dateOfBirth", updateMap.get("dateOfBirth"));
         putIfValid(requestBody, "address", updateMap.get("address"));
-
         requestBody.put("isActive", Boolean.parseBoolean(updateMap.getOrDefault("isActive", "true")));
-
-        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
 
         Response response = RestAssured.given()
                 .contentType("application/json")
@@ -87,8 +85,8 @@ public class GymCrmCoreStepDefinitions {
     @Then("trainee {string} should now have isActive = {word}")
     public void traineeShouldNowHaveIsActive(String username, String expectedStatus) throws Exception {
         boolean expectedIsActive = Boolean.parseBoolean(expectedStatus);
-
         String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
+
         Response response = RestAssured
                 .given()
                 .contentType("application/json")
@@ -186,8 +184,10 @@ public class GymCrmCoreStepDefinitions {
     }
 
     private void putIfValid(Map<String, Object> target, String key, String value) {
-        if (value != null && !value.isBlank() && !value.equals("[empty]")) {
-            target.put(key, value);
+        if (value == null || value.isBlank() || value.equals("[empty]")) {
+            return;
         }
+
+        target.put(key, value);
     }
 }
