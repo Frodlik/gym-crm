@@ -73,7 +73,7 @@ services:
       - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq-test:61616
       - SPRING_ACTIVEMQ_USER=test
       - SPRING_ACTIVEMQ_PASSWORD=test
-      - JWT_KEY=test-secret-key-for-integration-tests-minimum-32-characters-long
+      - JWT_KEY=test-secret-key-for-integration-tests-minimum-32-characters
       - ACTIVEMQ_BROKER_URL=tcp://activemq-test:61616
       - ACTIVEMQ_USER=test
       - ACTIVEMQ_PASSWORD=test

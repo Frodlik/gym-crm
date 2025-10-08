@@ -21,7 +21,7 @@ public class DatabaseHooks {
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
     }
 
-    @Before("@Workload")
+    @Before
     public void setUp() {
         mongoTemplate.getDb().drop();
     }
