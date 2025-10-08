@@ -3,26 +3,27 @@ package com.gym.crm.integrationtests.steps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.integrationtests.steps.context.TestContext;
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GymCrmCoreStepDefinitions {
     private static final String BASE_URL = "http://localhost:8091/api/v1";
     private static final String TRAINEE_REGISTRATION_ENDPOINT = "/trainees/register";
     private static final String TRAINER_REGISTRATION_ENDPOINT = "/trainers/register";
+    private static final String TRAINEE_ENDPOINT = "/trainees";
     private static final String TRAINING_ENDPOINT = "/trainings";
+    private static final String ACTIVATION_STATUS_ENDPOINT = "/change-activation-status";
+    private static final String ACCESS_TOKEN_COOKIE = "access-token=";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -41,6 +42,98 @@ public class GymCrmCoreStepDefinitions {
                 .post(BASE_URL + TRAINEE_REGISTRATION_ENDPOINT);
 
         testContext.setResponse(response);
+    }
+
+    @When("I update trainee {string} profile with following details:")
+    public void iUpdateTraineeProfileWithFollowingDetails(String username, DataTable dataTable) throws Exception {
+        Map<String, String> updateMap = dataTable.asMaps(String.class, String.class).getFirst();
+
+        Map<String, Object> requestBody = new HashMap<>();
+        putIfValid(requestBody, "firstName", updateMap.get("firstName"));
+        putIfValid(requestBody, "lastName", updateMap.get("lastName"));
+        putIfValid(requestBody, "dateOfBirth", updateMap.get("dateOfBirth"));
+        putIfValid(requestBody, "address", updateMap.get("address"));
+
+        requestBody.put("isActive", Boolean.parseBoolean(updateMap.getOrDefault("isActive", "true")));
+
+        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
+
+        Response response = RestAssured.given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .body(objectMapper.writeValueAsString(requestBody))
+                .put(BASE_URL + endpoint);
+
+        testContext.setResponse(response);
+    }
+
+    @When("I change activation status for trainee {string} to {word}")
+    public void iChangeActivationStatusForTrainee(String username, String status) {
+        boolean isActive = Boolean.parseBoolean(status);
+        String endpoint = String.format("%s/%s%s", TRAINEE_ENDPOINT, username, ACTIVATION_STATUS_ENDPOINT);
+
+        Map<String, Object> requestBody = Map.of("isActive", isActive);
+
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .body(requestBody)
+                .patch(BASE_URL + endpoint);
+
+        testContext.setResponse(response);
+    }
+
+    @Then("trainee {string} should now have isActive = {word}")
+    public void traineeShouldNowHaveIsActive(String username, String expectedStatus) throws Exception {
+        boolean expectedIsActive = Boolean.parseBoolean(expectedStatus);
+
+        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .get(BASE_URL + endpoint);
+
+        Map<String, Object> responseBody = objectMapper.readValue(response.getBody().asString(), Map.class);
+        assertEquals(expectedIsActive, responseBody.get("isActive"));
+    }
+
+    @Given("trainee {string} is inactive")
+    public void traineeIsInactive(String username) {
+        String endpoint = String.format("%s/%s?isActive=false", TRAINEE_ENDPOINT, username);
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .patch(BASE_URL + endpoint);
+    }
+
+    @When("I delete trainee profile for {string}")
+    public void iDeleteTraineeProfileFor(String username) {
+        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
+
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .delete(BASE_URL + endpoint);
+
+        testContext.setResponse(response);
+    }
+
+    @Then("trainee {string} should not exist anymore")
+    public void traineeShouldNotExistAnymore(String username) {
+        String endpoint = String.format("%s/%s", TRAINEE_ENDPOINT, username);
+
+        Response response = RestAssured
+                .given()
+                .contentType("application/json")
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
+                .get(BASE_URL + endpoint);
+
+        assertTrue(response.getStatusCode() == 404 || response.getStatusCode() == 401);
     }
 
     @Given("I register new trainer with following details:")
@@ -72,62 +165,11 @@ public class GymCrmCoreStepDefinitions {
         Response response = RestAssured
                 .given()
                 .contentType("application/json")
-                .header("Cookie", "access-token=" + testContext.getAuthToken())
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
                 .body(objectMapper.writeValueAsString(requestBody))
                 .post(BASE_URL + TRAINING_ENDPOINT);
 
         testContext.setResponse(response);
-    }
-
-    @And("I wait {int} seconds for JMS message processing")
-    public void iWaitSecondsForJMSMessageProcessing(int seconds) throws InterruptedException {
-        Thread.sleep(seconds * 1000L);
-    }
-
-    @And("workload should contain duration {int} minutes")
-    public void workloadShouldContainDurationMinutes(int expectedDuration) {
-        Response response = testContext.getResponse();
-        assertNotNull(response);
-
-        JsonPath jsonPath = response.jsonPath();
-        Integer actualDuration = jsonPath.getInt("years[0].months[0].trainingSummaryDuration");
-
-        assertNotNull(actualDuration);
-        assertEquals(expectedDuration, actualDuration);
-    }
-
-    @Then("response should contain field {string} matching pattern {string}")
-    public void theResponseShouldContainFieldMatchingPattern(String fieldName, String pattern) throws Exception {
-        String body = testContext.getResponse().getBody().asString();
-        assertNotNull(body);
-
-        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
-        String fieldValue = (String) responseBody.get(fieldName);
-
-        assertNotNull(fieldValue);
-        assertTrue(fieldValue.matches(pattern));
-    }
-
-    @Then("response should contain field {string} with minimum length {int}")
-    public void theResponseShouldContainFieldWithMinimumLength(String fieldName, int minLength) throws Exception {
-        String body = testContext.getResponse().getBody().asString();
-        assertNotNull(body);
-
-        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
-        String fieldValue = (String) responseBody.get(fieldName);
-
-        assertNotNull(fieldValue);
-        assertTrue(fieldValue.length() >= minLength);
-    }
-
-    @Then("response username should start with {string}")
-    public void theResponseUsernameShouldStartWith(String expectedPrefix) throws Exception {
-        String body = testContext.getResponse().getBody().asString();
-        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
-        String username = (String) responseBody.get("username");
-
-        assertNotNull(username);
-        assertTrue(username.startsWith(expectedPrefix));
     }
 
     @When("I request trainee profile for {string}")
@@ -137,18 +179,15 @@ public class GymCrmCoreStepDefinitions {
         Response response = RestAssured
                 .given()
                 .contentType("application/json")
-                .header("Cookie", "access-token=" + testContext.getAuthToken())
+                .header("Cookie", ACCESS_TOKEN_COOKIE + testContext.getAuthToken())
                 .get(BASE_URL + endpoint);
 
         testContext.setResponse(response);
     }
 
-    @Then("response should contain field {string} with value {string}")
-    public void responseShouldContainFieldWithValue(String field, String expectedValue) throws Exception {
-        String body = testContext.getResponse().getBody().asString();
-        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
-
-        assertTrue(responseBody.containsKey(field));
-        assertEquals(expectedValue, responseBody.get(field));
+    private void putIfValid(Map<String, Object> target, String key, String value) {
+        if (value != null && !value.isBlank() && !value.equals("[empty]")) {
+            target.put(key, value);
+        }
     }
 }

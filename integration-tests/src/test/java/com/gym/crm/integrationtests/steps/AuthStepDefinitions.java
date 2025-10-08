@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class AuthStepDefinition {
+public class AuthStepDefinitions {
     private static final String BASE_URL = "http://localhost:8091/api/v1";
     private static final String LOGIN_ENDPOINT = "/auth/login";
 

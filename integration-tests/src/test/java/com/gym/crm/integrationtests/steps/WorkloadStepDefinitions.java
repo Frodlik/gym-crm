@@ -4,10 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.integrationtests.steps.context.TestContext;
 import com.gym.crm.integrationtests.util.JwtTokenGenerator;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -73,5 +75,17 @@ public class WorkloadStepDefinitions {
         assertNotNull(responseBody.get("firstName"));
         assertNotNull(responseBody.get("lastName"));
         assertNotNull(responseBody.get("years"));
+    }
+
+    @And("workload should contain duration {int} minutes")
+    public void workloadShouldContainDurationMinutes(int expectedDuration) {
+        Response response = testContext.getResponse();
+        assertNotNull(response);
+
+        JsonPath jsonPath = response.jsonPath();
+        Integer actualDuration = jsonPath.getInt("years[0].months[0].trainingSummaryDuration");
+
+        assertNotNull(actualDuration);
+        assertEquals(expectedDuration, actualDuration);
     }
 }
