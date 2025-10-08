@@ -44,7 +44,6 @@ Feature: Training and Workload Service Integration
       | trainingDate      | 2025-10-15     |
       | trainingDuration  | 60             |
     Then response status should be 503
-    And I wait 3 seconds for JMS message processing
     When I retrieve workload data for trainer "jane.trainer"
     Then response status should be 404
     And ActiveMQ container is running

@@ -14,6 +14,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CommonStepDefinitions {
     @Autowired
@@ -31,6 +32,54 @@ public class CommonStepDefinitions {
     @Then("response status should be {int}")
     public void theResponseStatusShouldBe(int expectedStatus) {
         testContext.getResponse().then().statusCode(expectedStatus);
+    }
+
+    @And("I wait {int} seconds for JMS message processing")
+    public void iWaitSecondsForJMSMessageProcessing(int seconds) throws InterruptedException {
+        Thread.sleep(seconds * 1000L);
+    }
+
+    @Then("response should contain field {string} matching pattern {string}")
+    public void theResponseShouldContainFieldMatchingPattern(String fieldName, String pattern) throws Exception {
+        String body = testContext.getResponse().getBody().asString();
+        assertNotNull(body);
+
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+        String fieldValue = (String) responseBody.get(fieldName);
+
+        assertNotNull(fieldValue);
+        assertTrue(fieldValue.matches(pattern));
+    }
+
+    @Then("response should contain field {string} with minimum length {int}")
+    public void theResponseShouldContainFieldWithMinimumLength(String fieldName, int minLength) throws Exception {
+        String body = testContext.getResponse().getBody().asString();
+        assertNotNull(body);
+
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+        String fieldValue = (String) responseBody.get(fieldName);
+
+        assertNotNull(fieldValue);
+        assertTrue(fieldValue.length() >= minLength);
+    }
+
+    @Then("response username should start with {string}")
+    public void theResponseUsernameShouldStartWith(String expectedPrefix) throws Exception {
+        String body = testContext.getResponse().getBody().asString();
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+        String username = (String) responseBody.get("username");
+
+        assertNotNull(username);
+        assertTrue(username.startsWith(expectedPrefix));
+    }
+
+    @Then("response should contain field {string} with value {string}")
+    public void responseShouldContainFieldWithValue(String field, String expectedValue) throws Exception {
+        String body = testContext.getResponse().getBody().asString();
+        Map<String, Object> responseBody = objectMapper.readValue(body, Map.class);
+
+        assertTrue(responseBody.containsKey(field));
+        assertEquals(expectedValue, responseBody.get(field).toString());
     }
 
     @Then("I received error with next attributes:")
