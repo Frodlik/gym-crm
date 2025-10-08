@@ -17,6 +17,7 @@ Feature: Training and Workload Service Integration
     Then response status should be 200
     And I should be successfully logged in
 
+  @PositiveScenario
   Scenario: Successfully create training and verify workload data
     When I create new training with following details:
       | field             | value          |
@@ -31,3 +32,19 @@ Feature: Training and Workload Service Integration
     Then response status should be 200
     And response should contain trainer "jane.trainer" with workload data
     And workload should contain duration 60 minutes
+
+  @NegativeScenario
+  Scenario: Training created but workload not updated because ActiveMQ was stopped
+    Given ActiveMQ container is stopped
+    When I create new training with following details:
+      | field             | value          |
+      | traineeUsername   | john.trainee   |
+      | trainerUsername   | jane.trainer   |
+      | trainingName      | FITNESS        |
+      | trainingDate      | 2025-10-15     |
+      | trainingDuration  | 60             |
+    Then response status should be 503
+    And I wait 3 seconds for JMS message processing
+    When I retrieve workload data for trainer "jane.trainer"
+    Then response status should be 404
+    And ActiveMQ container is running
