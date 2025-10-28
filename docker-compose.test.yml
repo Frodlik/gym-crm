@@ -13,7 +13,7 @@ services:
       - MYSQL_USER=testuser
       - MYSQL_PASSWORD=testpass
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_test:/var/lib/mysql
       - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - gym-network-test
@@ -32,7 +32,7 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=testdb
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data_test:/data/db
     networks:
       - gym-network-test
     healthcheck:
@@ -110,8 +110,8 @@ services:
     restart: on-failure
 
 volumes:
-  mysql_data:
-  mongodb_data:
+  mysql_data_test:
+  mongodb_data_test:
 
 networks:
   gym-network-test:
