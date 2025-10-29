@@ -8,7 +8,7 @@ services:
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_ROOT_PASSWORD=pass
       - MYSQL_DATABASE=gym_crm
       - MYSQL_USER=gcauser
       - MYSQL_PASSWORD=gcapass
