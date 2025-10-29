@@ -1,0 +1,147 @@
+version: '3.9'
+name: gym-crm
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass
+      - MYSQL_DATABASE=gym_crm
+      - MYSQL_USER=gcauser
+      - MYSQL_PASSWORD=gcapass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - gym-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gcauser", "-pgcapass" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=gym_crm_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - gym-network
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      - ACTIVEMQ_USERNAME=gcauser
+      - ACTIVEMQ_PASSWORD=gcapass
+    networks:
+      - gym-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8161/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discovery-service:
+    build:
+      context: .
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - gym-network
+    restart: on-failure
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_KEY=u8Z4vN3kXxM2qB7eG9TfRjL5cPwYhQsDzVuAiKmNzXtGbHoC
+      - EUREKA_URL=http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_started
+    networks:
+      - gym-network
+    restart: on-failure
+
+  gym-crm-core:
+    build:
+      context: .
+      dockerfile: gym-crm-core/Dockerfile
+    container_name: gym-crm-core
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/gym_crm
+      - SPRING_DATASOURCE_USERNAME=gcauser
+      - SPRING_DATASOURCE_PASSWORD=gcapass
+      - JWT_KEY=u8Z4vN3kXxM2qB7eG9TfRjL5cPwYhQsDzVuAiKmNzXtGbHoC
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=gcauser
+      - SPRING_ACTIVEMQ_PASSWORD=gcapass
+      - EUREKA_URL=http://discovery-service:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    networks:
+      - gym-network
+    restart: on-failure
+
+  workload-service:
+    build:
+      context: .
+      dockerfile: workload-service/Dockerfile
+    container_name: workload-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/gym_crm_db
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=gcauser
+      - SPRING_ACTIVEMQ_PASSWORD=gcapass
+      - JWT_SECRET=u8Z4vN3kXxM2qB7eG9TfRjL5cPwYhQsDzVuAiKmNzXtGbHoC
+      - EUREKA_URL=http://discovery-service:8761/eureka/
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    networks:
+      - gym-network
+    restart: on-failure
+
+volumes:
+  mysql_data:
+  mongodb_data:
+
+networks:
+  gym-network:
+    driver: bridge
